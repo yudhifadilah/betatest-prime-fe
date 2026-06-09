@@ -52,7 +52,7 @@ export default function Navbar() {
     },
     {
       label: "Cek Transaksi",
-      href: "/cektransaksi",
+      href: "/cek-transaksi",
       icon: <SearchCheck size={22} />,
     },
   ];
