@@ -80,20 +80,23 @@ export default function LoginPage() {
       localStorage.removeItem("user");
       localStorage.removeItem("role");
 
-      const response = await fetch(
-        "https://betatest-prime.vercel.app/api/auth/login",
-        {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL;
+
+const response = await fetch(
+  `${API_URL}/api/auth/login`,
+  {
+    method: "POST",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: form.email,
+      password: form.password,
+    }),
+  }
+);
 
       const data: LoginResponse =
         await response.json();

@@ -13,8 +13,10 @@ import {
   RefreshCcw,
 } from "lucide-react";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL;
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(
+  /\/+$/,
+  ""
+);
 
 type Role = "admin" | "staff" | "buyer" | null;
 type OrderType = "vilog" | "payout" | "lims";
@@ -28,6 +30,20 @@ type DashboardOrder = {
   status: string;
   type: OrderType;
   createdAt?: string;
+};
+
+const statusStyle: Record<string, string> = {
+  Pending: "border-yellow-400/20 bg-yellow-500/10 text-yellow-300",
+  Accepted: "border-purple-400/20 bg-purple-500/10 text-purple-300",
+  Process: "border-blue-400/20 bg-blue-500/10 text-blue-300",
+  Success: "border-emerald-400/20 bg-emerald-500/10 text-emerald-300",
+  Cancelled: "border-red-400/20 bg-red-500/10 text-red-300",
+};
+
+const typeStyle: Record<OrderType, string> = {
+  vilog: "border-cyan-400/20 bg-cyan-500/10 text-cyan-300",
+  payout: "border-orange-400/20 bg-orange-500/10 text-orange-300",
+  lims: "border-violet-400/20 bg-violet-500/10 text-violet-300",
 };
 
 export default function DashboardPage() {
@@ -58,20 +74,6 @@ export default function DashboardPage() {
     if (value === "accepted") return "Accepted";
 
     return "Pending";
-  };
-
-  const statusStyle: Record<string, string> = {
-    Pending: "bg-yellow-100 text-yellow-700",
-    Accepted: "bg-purple-100 text-purple-700",
-    Process: "bg-blue-100 text-blue-700",
-    Success: "bg-emerald-100 text-emerald-700",
-    Cancelled: "bg-red-100 text-red-700",
-  };
-
-  const typeStyle: Record<OrderType, string> = {
-    vilog: "bg-cyan-100 text-cyan-700",
-    payout: "bg-orange-100 text-orange-700",
-    lims: "bg-violet-100 text-violet-700",
   };
 
   const safeFetch = async (url: string) => {
@@ -224,77 +226,64 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      <section className="overflow-hidden rounded-[32px] border border-neutral-200 bg-white shadow-sm">
-        <div className="relative p-6 md:p-8">
-          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-black/5 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 pb-10 pt-24 text-white md:px-8 md:pt-8">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[#07111f]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(6,182,212,0.18),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(37,99,235,0.20),transparent_32%),radial-gradient(circle_at_80%_85%,rgba(37,99,235,0.14),transparent_34%)]" />
 
-          <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-8">
+        <section className="relative overflow-hidden rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-2xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(6,182,212,0.18),transparent_35%)]" />
+
+          <div className="relative flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300">
+                <ReceiptText size={18} />
                 Admin Overview
-              </p>
+              </div>
 
-              <h1 className="mt-3 text-4xl font-bold text-black md:text-5xl">
+              <h1 className="mt-5 text-4xl font-black text-white md:text-5xl">
                 Dashboard Admin
               </h1>
 
-              <p className="mt-3 max-w-xl text-neutral-500">
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-400 md:text-base">
                 Menampilkan order terbaru dari Vilog, Payout, dan LIMS sesuai
                 role akun yang sedang login.
               </p>
             </div>
 
-            <div className="rounded-3xl bg-black p-5 text-white shadow-xl">
-              <p className="text-sm text-white/60">Total Revenue</p>
-              <h2 className="mt-2 text-3xl font-bold">
+            <div className="rounded-[30px] border border-cyan-400/20 bg-cyan-500/10 p-5 shadow-xl shadow-cyan-500/20">
+              <p className="text-sm font-bold text-cyan-300">Total Revenue</p>
+              <h2 className="mt-2 text-3xl font-black text-white">
                 {formatRupiah(totalRevenue)}
               </h2>
 
-              <div className="mt-4 flex items-center gap-2 text-sm text-white/80">
-                <ArrowUpRight size={18} />
+              <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-gray-300">
+                <ArrowUpRight size={18} className="text-cyan-300" />
                 Berdasarkan data order API
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => (
-          <div
-            key={item.title}
-            className="group rounded-[28px] border border-neutral-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 text-black transition group-hover:bg-black group-hover:text-white">
-                {item.icon}
-              </div>
+        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((item) => (
+            <StatCard
+              key={item.title}
+              title={item.title}
+              value={item.value}
+              subtitle={item.subtitle}
+              icon={item.icon}
+            />
+          ))}
+        </section>
 
-              <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-500">
-                Live
-              </span>
-            </div>
-
-            <p className="mt-5 text-sm font-medium text-neutral-500">
-              {item.title}
-            </p>
-
-            <h2 className="mt-2 text-3xl font-bold text-black">
-              {item.value}
-            </h2>
-
-            <p className="mt-2 text-sm text-neutral-400">{item.subtitle}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-        <div className="rounded-[32px] border border-neutral-200 bg-white p-5 shadow-sm md:p-6">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-2xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
+          <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
             <div>
-              <h2 className="text-2xl font-bold text-black">Order Terbaru</h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <h2 className="text-2xl font-black text-white">
+                Order Terbaru
+              </h2>
+              <p className="mt-2 text-sm text-gray-400">
                 Data gabungan dari Vilog, Payout, dan LIMS.
               </p>
             </div>
@@ -303,54 +292,39 @@ export default function DashboardPage() {
               type="button"
               onClick={loadOrders}
               disabled={loading}
-              className="flex items-center justify-center gap-2 rounded-2xl border border-neutral-200 px-5 py-3 text-sm font-semibold text-black hover:bg-neutral-100 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-extrabold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
             >
-              <RefreshCcw size={16} />
+              <RefreshCcw
+                size={16}
+                className={loading ? "animate-spin" : ""}
+              />
               {loading ? "Loading..." : "Refresh"}
             </button>
           </div>
 
-          <div className="mt-6 overflow-x-auto rounded-3xl border border-neutral-200">
-            <table className="w-full min-w-[860px] text-left">
-              <thead className="bg-neutral-50">
+          <div className="mt-6 overflow-x-auto rounded-[30px] border border-white/10 bg-[#0b1627]/50">
+            <table className="w-full min-w-[860px] border-collapse text-left">
+              <thead className="border-b border-white/10 bg-cyan-500/10 text-sm text-cyan-200">
                 <tr>
-                  <th className="px-5 py-4 text-sm font-semibold text-neutral-500">
-                    Order ID
-                  </th>
-                  <th className="px-5 py-4 text-sm font-semibold text-neutral-500">
-                    Tipe
-                  </th>
-                  <th className="px-5 py-4 text-sm font-semibold text-neutral-500">
-                    Customer
-                  </th>
-                  <th className="px-5 py-4 text-sm font-semibold text-neutral-500">
-                    Produk
-                  </th>
-                  <th className="px-5 py-4 text-sm font-semibold text-neutral-500">
-                    Total
-                  </th>
-                  <th className="px-5 py-4 text-sm font-semibold text-neutral-500">
-                    Status
-                  </th>
+                  <th className="px-5 py-4">Order ID</th>
+                  <th className="px-5 py-4">Tipe</th>
+                  <th className="px-5 py-4">Customer</th>
+                  <th className="px-5 py-4">Produk</th>
+                  <th className="px-5 py-4">Total</th>
+                  <th className="px-5 py-4">Status</th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-5 py-8 text-center text-neutral-500"
-                    >
+                    <td colSpan={6} className="px-5 py-10 text-center text-gray-400">
                       Mengambil data order...
                     </td>
                   </tr>
                 ) : latestOrders.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-5 py-8 text-center text-neutral-500"
-                    >
+                    <td colSpan={6} className="px-5 py-10 text-center text-gray-400">
                       Belum ada order yang bisa ditampilkan.
                     </td>
                   </tr>
@@ -358,15 +332,15 @@ export default function DashboardPage() {
                   latestOrders.map((order) => (
                     <tr
                       key={`${order.type}-${order.id}`}
-                      className="border-t border-neutral-100"
+                      className="border-b border-white/10 text-sm transition last:border-b-0 hover:bg-cyan-500/5"
                     >
-                      <td className="px-5 py-4 font-semibold text-black">
+                      <td className="px-5 py-4 font-extrabold text-white">
                         {order.orderId}
                       </td>
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
+                          className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${
                             typeStyle[order.type]
                           }`}
                         >
@@ -374,23 +348,23 @@ export default function DashboardPage() {
                         </span>
                       </td>
 
-                      <td className="px-5 py-4 text-neutral-700">
+                      <td className="px-5 py-4 text-gray-300">
                         {order.customer}
                       </td>
 
-                      <td className="px-5 py-4 text-neutral-700">
+                      <td className="px-5 py-4 text-gray-300">
                         {order.product}
                       </td>
 
-                      <td className="px-5 py-4 font-semibold text-black">
+                      <td className="px-5 py-4 font-extrabold text-cyan-300">
                         {formatRupiah(order.amount)}
                       </td>
 
                       <td className="px-5 py-4">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          className={`rounded-full border px-3 py-1 text-xs font-bold ${
                             statusStyle[order.status] ||
-                            "bg-neutral-100 text-neutral-700"
+                            "border-white/10 bg-white/[0.04] text-gray-300"
                           }`}
                         >
                           {order.status}
@@ -402,56 +376,41 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="group rounded-[28px] border border-cyan-500/20 bg-white/[0.04] p-5 shadow-xl shadow-cyan-500/5 backdrop-blur-md transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5">
+      <div className="flex items-start justify-between">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400 transition group-hover:bg-cyan-500 group-hover:text-[#07111f]">
+          {icon}
         </div>
 
-        <div className="rounded-[32px] border border-neutral-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold text-black">Aktivitas</h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Ringkasan status order saat ini.
-          </p>
+        <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300">
+          Live
+        </span>
+      </div>
 
-          <div className="mt-6 space-y-4">
-            <div className="flex items-start gap-4 rounded-3xl bg-neutral-50 p-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                <CheckCircle2 size={22} />
-              </div>
+      <p className="mt-5 text-sm font-bold text-gray-400">{title}</p>
 
-              <div>
-                <p className="font-semibold text-black">Order sukses</p>
-                <p className="text-sm text-neutral-500">
-                  {successOrders} transaksi berhasil diselesaikan.
-                </p>
-              </div>
-            </div>
+      <h2 className="mt-2 text-3xl font-black text-white">{value}</h2>
 
-            <div className="flex items-start gap-4 rounded-3xl bg-neutral-50 p-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                <Clock3 size={22} />
-              </div>
-
-              <div>
-                <p className="font-semibold text-black">Sedang diproses</p>
-                <p className="text-sm text-neutral-500">
-                  {processOrders} order masih diproses staff.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 rounded-3xl bg-neutral-50 p-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-600">
-                <AlertCircle size={22} />
-              </div>
-
-              <div>
-                <p className="font-semibold text-black">Pending</p>
-                <p className="text-sm text-neutral-500">
-                  {pendingOrders} order belum diselesaikan.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <p className="mt-2 text-sm text-gray-500">{subtitle}</p>
     </div>
   );
 }
+

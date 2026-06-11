@@ -258,7 +258,7 @@ export default function DashboardPayoutPage() {
           method: "PATCH",
           headers: authHeaders,
           body: JSON.stringify({ status }),
-        }
+        },
       );
 
       const result = await safeJson(response);
@@ -284,9 +284,15 @@ export default function DashboardPayoutPage() {
 
     return products.filter((item) => {
       return (
-        String(item.namaProduk || "").toLowerCase().includes(keyword) ||
-        String(item.nominalRobux || "").toLowerCase().includes(keyword) ||
-        String(item.harga || "").toLowerCase().includes(keyword)
+        String(item.namaProduk || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(item.nominalRobux || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(item.harga || "")
+          .toLowerCase()
+          .includes(keyword)
       );
     });
   }, [products, searchProduct]);
@@ -296,14 +302,22 @@ export default function DashboardPayoutPage() {
 
     return orders.filter((item) => {
       const produk = products.find(
-        (p) => String(p.id) === String(item.payoutProdukId)
+        (p) => String(p.id) === String(item.payoutProdukId),
       );
 
       return (
-        String(item.orderId || "").toLowerCase().includes(keyword) ||
-        String(item.robloxUsername || "").toLowerCase().includes(keyword) ||
-        String(item.nomorRekening || "").toLowerCase().includes(keyword) ||
-        String(item.status || "").toLowerCase().includes(keyword) ||
+        String(item.orderId || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(item.robloxUsername || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(item.nomorRekening || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(item.status || "")
+          .toLowerCase()
+          .includes(keyword) ||
         String(item.PayoutProduk?.namaProduk || produk?.namaProduk || "")
           .toLowerCase()
           .includes(keyword)
@@ -313,7 +327,7 @@ export default function DashboardPayoutPage() {
 
   const getOrderProduct = (order: PayoutOrder) => {
     const produkFromList = products.find(
-      (item) => String(item.id) === String(order.payoutProdukId)
+      (item) => String(item.id) === String(order.payoutProdukId),
     );
 
     return {
@@ -323,7 +337,7 @@ export default function DashboardPayoutPage() {
         "Payout",
       harga: Number(order.PayoutProduk?.harga || produkFromList?.harga || 0),
       nominalRobux: Number(
-        order.PayoutProduk?.nominalRobux || produkFromList?.nominalRobux || 0
+        order.PayoutProduk?.nominalRobux || produkFromList?.nominalRobux || 0,
       ),
     };
   };
@@ -353,29 +367,29 @@ export default function DashboardPayoutPage() {
 
     const style =
       current === "completed" || current === "success"
-        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+        ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
         : current === "processing"
-        ? "bg-blue-100 text-blue-700 border-blue-200"
-        : current === "cancelled"
-        ? "bg-red-100 text-red-700 border-red-200"
-        : current === "unpaid"
-        ? "bg-neutral-100 text-neutral-700 border-neutral-200"
-        : "bg-yellow-100 text-yellow-700 border-yellow-200";
+          ? "border-blue-400/20 bg-blue-500/10 text-blue-300"
+          : current === "cancelled"
+            ? "border-red-400/20 bg-red-500/10 text-red-300"
+            : current === "unpaid"
+              ? "border-white/10 bg-white/5 text-gray-300"
+              : "border-yellow-400/20 bg-yellow-500/10 text-yellow-300";
 
     const label =
       current === "completed" || current === "success"
         ? "Completed"
         : current === "processing"
-        ? "Processing"
-        : current === "cancelled"
-        ? "Cancelled"
-        : current === "unpaid"
-        ? "Unpaid"
-        : "Pending";
+          ? "Processing"
+          : current === "cancelled"
+            ? "Cancelled"
+            : current === "unpaid"
+              ? "Unpaid"
+              : "Pending";
 
     return (
       <span
-        className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${style}`}
+        className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold ${style}`}
       >
         {label}
       </span>
@@ -383,42 +397,42 @@ export default function DashboardPayoutPage() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-100 px-5 pb-10 pt-24 md:px-8 md:pt-8">
-      <div className="mx-auto w-full max-w-7xl space-y-8">
-        <section className="overflow-hidden rounded-[34px] border border-neutral-200 bg-white shadow-sm">
-          <div className="relative p-6 md:p-8">
-            <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-black/5 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 pb-10 pt-24 text-white md:px-8 md:pt-8">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[#07111f]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(6,182,212,0.18),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(37,99,235,0.20),transparent_32%),radial-gradient(circle_at_80%_85%,rgba(37,99,235,0.14),transparent_34%)]" />
 
-            <div className="relative flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-bold text-white">
-                  <ShieldCheck size={18} />
-                  Payout Management
-                </div>
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-8">
+        <section className="relative overflow-hidden rounded-[34px] border border-cyan-500/20 bg-white/[0.04] shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(6,182,212,0.18),transparent_38%)]" />
 
-                <h1 className="mt-5 text-4xl font-black text-black md:text-5xl">
-                  Dashboard Payout
-                </h1>
-
-                <p className="mt-3 max-w-2xl text-neutral-500">
-                  Kelola produk payout, pantau order Roblox, cek bukti
-                  pembayaran, dan update status transaksi dengan tampilan yang
-                  lebih modern.
-                </p>
+          <div className="relative flex flex-col justify-between gap-6 p-6 md:p-8 xl:flex-row xl:items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300">
+                <ShieldCheck size={18} />
+                Payout Management
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  getProducts();
-                  getOrders();
-                }}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-black px-5 py-4 font-bold text-white shadow-lg transition hover:opacity-90"
-              >
-                <RefreshCw size={20} />
-                Refresh Data
-              </button>
+              <h1 className="mt-5 text-4xl font-black text-white md:text-5xl">
+                Dashboard Payout
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-400 md:text-base">
+                Kelola produk payout, pantau order Roblox, cek bukti pembayaran,
+                dan update status transaksi dengan tampilan PrimeBlox.
+              </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                getProducts();
+                getOrders();
+              }}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-4 text-sm font-extrabold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400"
+            >
+              <RefreshCw size={20} />
+              Refresh Data
+            </button>
           </div>
         </section>
 
@@ -450,17 +464,17 @@ export default function DashboardPayoutPage() {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
                 <Package size={24} />
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-black">
+                <h2 className="text-2xl font-black text-white">
                   {editingId ? "Edit Produk" : "Tambah Produk"}
                 </h2>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-gray-400">
                   Atur nama produk, nominal robux, harga, dan status produk.
                 </p>
               </div>
@@ -506,7 +520,7 @@ export default function DashboardPayoutPage() {
               />
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-black">
+                <label className="mb-2 block text-sm font-bold text-gray-300">
                   Status Produk
                 </label>
 
@@ -518,10 +532,14 @@ export default function DashboardPayoutPage() {
                       isActive: e.target.value === "true",
                     })
                   }
-                  className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+                  className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/80 px-5 py-4 text-sm text-white outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
                 >
-                  <option value="true">Aktif</option>
-                  <option value="false">Nonaktif</option>
+                  <option className="bg-[#0b1627]" value="true">
+                    Aktif
+                  </option>
+                  <option className="bg-[#0b1627]" value="false">
+                    Nonaktif
+                  </option>
                 </select>
               </div>
             </div>
@@ -531,21 +549,21 @@ export default function DashboardPayoutPage() {
                 type="button"
                 onClick={submitProduct}
                 disabled={saving}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-6 py-4 text-sm font-extrabold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
               >
                 {editingId ? <Save size={20} /> : <Plus size={20} />}
                 {saving
                   ? "Menyimpan..."
                   : editingId
-                  ? "Update Produk"
-                  : "Tambah Produk"}
+                    ? "Update Produk"
+                    : "Tambah Produk"}
               </button>
 
               {editingId && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-2xl bg-neutral-100 px-6 py-4 font-bold text-black transition hover:bg-neutral-200"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-bold text-gray-300 transition hover:bg-white/10"
                 >
                   Batal
                 </button>
@@ -553,13 +571,13 @@ export default function DashboardPayoutPage() {
             </div>
           </div>
 
-          <div className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
             <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
-                <h2 className="text-2xl font-black text-black">
+                <h2 className="text-2xl font-black text-white">
                   Daftar Produk
                 </h2>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-gray-400">
                   Total {filteredProducts.length} produk ditemukan.
                 </p>
               </div>
@@ -580,34 +598,32 @@ export default function DashboardPayoutPage() {
                 {filteredProducts.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-[26px] border border-neutral-200 bg-neutral-50 p-5 transition hover:-translate-y-1 hover:shadow-lg"
+                    className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 transition hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-cyan-500/5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-black text-black">
+                        <h3 className="font-black text-white">
                           {item.namaProduk}
                         </h3>
-                        <p className="mt-1 text-sm text-neutral-500">
+                        <p className="mt-1 text-sm text-gray-400">
                           {formatRobux(item.nominalRobux)}
                         </p>
                       </div>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        className={`rounded-full border px-3 py-1 text-xs font-bold ${
                           item.isActive
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-red-100 text-red-700"
+                            ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
+                            : "border-red-400/20 bg-red-500/10 text-red-300"
                         }`}
                       >
                         {item.isActive ? "Aktif" : "Nonaktif"}
                       </span>
                     </div>
 
-                    <div className="mt-5 rounded-2xl bg-white px-4 py-3">
-                      <p className="text-xs font-bold text-neutral-400">
-                        Harga
-                      </p>
-                      <p className="mt-1 text-xl font-black text-black">
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1627]/70 px-4 py-3">
+                      <p className="text-xs font-bold text-gray-500">Harga</p>
+                      <p className="mt-1 text-xl font-black text-cyan-400">
                         {formatRupiah(item.harga)}
                       </p>
                     </div>
@@ -616,7 +632,7 @@ export default function DashboardPayoutPage() {
                       <button
                         type="button"
                         onClick={() => editProduct(item)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-black px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-bold text-[#07111f] transition hover:bg-cyan-400"
                       >
                         <Pencil size={16} />
                         Edit
@@ -625,7 +641,7 @@ export default function DashboardPayoutPage() {
                       <button
                         type="button"
                         onClick={() => deleteProduct(item.id)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500/20"
                       >
                         <Trash2 size={16} />
                         Hapus
@@ -638,14 +654,14 @@ export default function DashboardPayoutPage() {
           </div>
         </section>
 
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
           <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="flex items-center gap-3 text-2xl font-black text-black">
-                <ShoppingCart size={26} />
+              <h2 className="flex items-center gap-3 text-2xl font-black text-white">
+                <ShoppingCart size={26} className="text-cyan-400" />
                 Order Payout
               </h2>
-              <p className="mt-1 text-neutral-500">
+              <p className="mt-1 text-gray-400">
                 Kelola status order dan lihat bukti pembayaran pelanggan.
               </p>
             </div>
@@ -669,7 +685,7 @@ export default function DashboardPayoutPage() {
                 return (
                   <div
                     key={order.id}
-                    className="rounded-[28px] border border-neutral-200 bg-neutral-50 p-5 transition hover:shadow-lg"
+                    className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 transition hover:border-cyan-400/30 hover:bg-cyan-500/5"
                   >
                     <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
                       <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -707,7 +723,9 @@ export default function DashboardPayoutPage() {
 
                       <InfoBlock
                         label="Join Group"
-                        value={order.isJoinedGroup ? "Sudah Join" : "Belum Join"}
+                        value={
+                          order.isJoinedGroup ? "Sudah Join" : "Belum Join"
+                        }
                       />
 
                       <ProofButton
@@ -715,14 +733,14 @@ export default function DashboardPayoutPage() {
                         available={Boolean(order.paymentProof)}
                         onClick={() =>
                           setPreviewImage(
-                            normalizePaymentUrl(order.paymentProof)
+                            normalizePaymentUrl(order.paymentProof),
                           )
                         }
                       />
                     </div>
 
                     <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="flex items-center gap-2 text-sm text-neutral-500">
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
                         <Clock3 size={16} />
                         {order.createdAt
                           ? new Date(order.createdAt).toLocaleString("id-ID")
@@ -734,13 +752,23 @@ export default function DashboardPayoutPage() {
                         onChange={(e) =>
                           updateOrderStatus(order.id, e.target.value)
                         }
-                        className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-bold text-black outline-none focus:border-black"
+                        className="rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 text-sm font-bold text-white outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
                       >
-                        <option value="unpaid">Unpaid</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option className="bg-[#0b1627]" value="unpaid">
+                          Unpaid
+                        </option>
+                        <option className="bg-[#0b1627]" value="pending">
+                          Pending
+                        </option>
+                        <option className="bg-[#0b1627]" value="processing">
+                          Processing
+                        </option>
+                        <option className="bg-[#0b1627]" value="completed">
+                          Completed
+                        </option>
+                        <option className="bg-[#0b1627]" value="cancelled">
+                          Cancelled
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -753,11 +781,11 @@ export default function DashboardPayoutPage() {
 
       {previewImage && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl rounded-[32px] bg-white p-4">
+          <div className="relative w-full max-w-4xl rounded-[32px] border border-cyan-500/20 bg-[#07111f] p-4 shadow-2xl shadow-cyan-500/20">
             <button
               type="button"
               onClick={() => setPreviewImage(null)}
-              className="absolute -right-3 -top-3 rounded-full bg-white p-2 shadow-lg"
+              className="absolute -right-3 -top-3 rounded-full border border-white/10 bg-[#0b1627] p-2 text-white shadow-lg"
             >
               <XCircle />
             </button>
@@ -765,7 +793,7 @@ export default function DashboardPayoutPage() {
             <img
               src={previewImage}
               alt="payment proof"
-              className="max-h-[80vh] w-full rounded-[24px] object-contain"
+              className="max-h-[80vh] w-full rounded-[24px] bg-black/20 object-contain"
             />
           </div>
         </div>
@@ -786,14 +814,14 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="group rounded-[28px] border border-neutral-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 text-black transition group-hover:bg-black group-hover:text-white">
+    <div className="group rounded-[28px] border border-cyan-500/20 bg-white/[0.04] p-5 shadow-xl shadow-cyan-500/10 backdrop-blur-md transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400 transition group-hover:bg-cyan-500 group-hover:text-[#07111f]">
         {icon}
       </div>
 
-      <p className="mt-5 text-sm font-bold text-neutral-500">{title}</p>
-      <h2 className="mt-2 text-3xl font-black text-black">{value}</h2>
-      <p className="mt-2 text-sm text-neutral-400">{subtitle}</p>
+      <p className="mt-5 text-sm font-bold text-gray-400">{title}</p>
+      <h2 className="mt-2 text-3xl font-black text-white">{value}</h2>
+      <p className="mt-2 text-sm text-gray-500">{subtitle}</p>
     </div>
   );
 }
@@ -808,15 +836,15 @@ function SearchBox({
   placeholder: string;
 }) {
   return (
-    <div className="flex w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 md:w-[320px]">
-      <Search size={18} className="text-neutral-400" />
+    <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-400/10 md:w-[320px]">
+      <Search size={18} className="text-cyan-400" />
 
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent text-sm text-black outline-none placeholder:text-neutral-400"
+        className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
       />
     </div>
   );
@@ -837,14 +865,16 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-black">{label}</label>
+      <label className="mb-2 block text-sm font-bold text-gray-300">
+        {label}
+      </label>
 
       <input
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+        className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/80 px-5 py-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
       />
     </div>
   );
@@ -860,12 +890,12 @@ function InfoBlock({
   bold?: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3">
-      <p className="text-xs font-bold text-neutral-400">{label}</p>
+    <div className="rounded-2xl border border-white/10 bg-[#0b1627]/70 px-4 py-3">
+      <p className="text-xs font-bold text-gray-500">{label}</p>
 
       <p
         className={`mt-1 truncate text-sm ${
-          bold ? "font-black text-black" : "font-semibold text-neutral-700"
+          bold ? "font-black text-cyan-400" : "font-semibold text-gray-300"
         }`}
       >
         {value}
@@ -884,20 +914,20 @@ function ProofButton({
   onClick: () => void;
 }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3">
-      <p className="text-xs font-bold text-neutral-400">{label}</p>
+    <div className="rounded-2xl border border-white/10 bg-[#0b1627]/70 px-4 py-3">
+      <p className="text-xs font-bold text-gray-500">{label}</p>
 
       {available ? (
         <button
           type="button"
           onClick={onClick}
-          className="mt-2 flex items-center gap-2 rounded-xl bg-neutral-100 px-3 py-2 text-sm font-bold text-black transition hover:bg-neutral-200"
+          className="mt-2 flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-3 py-2 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500 hover:text-[#07111f]"
         >
           <Eye size={16} />
           Lihat
         </button>
       ) : (
-        <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-neutral-400">
+        <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-500">
           <AlertCircle size={16} />
           Tidak ada
         </div>
@@ -908,14 +938,14 @@ function ProofButton({
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[30px] border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-white shadow-sm">
-        <AlertCircle size={30} className="text-neutral-400" />
+    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[30px] border border-dashed border-cyan-400/20 bg-white/[0.04] p-10 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
+        <AlertCircle size={30} />
       </div>
 
-      <h3 className="mt-5 text-lg font-black text-black">Tidak Ada Data</h3>
+      <h3 className="mt-5 text-lg font-black text-white">Tidak Ada Data</h3>
 
-      <p className="mt-2 max-w-sm text-sm text-neutral-500">{text}</p>
+      <p className="mt-2 max-w-sm text-sm text-gray-400">{text}</p>
     </div>
   );
 }

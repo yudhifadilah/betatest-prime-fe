@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   XCircle,
   Landmark,
+  ShieldCheck,
+  AlertCircle,
 } from "lucide-react";
 
 type Rekening = {
@@ -26,8 +28,10 @@ type Rekening = {
   isActive?: boolean;
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL;
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(
+  /\/+$/,
+  ""
+);
 
 export default function RekeningPage() {
   const [data, setData] = useState<Rekening[]>([]);
@@ -54,6 +58,28 @@ export default function RekeningPage() {
     return localStorage.getItem("token") || "";
   };
 
+  const getFileUrl = (path?: string) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+
+    const cleanPath = path.replace(/\\/g, "/").replace(/^\/+/, "");
+    return `${API_URL}/${cleanPath}`;
+  };
+
+  const safeJson = async (res: Response, fallbackUrl?: string) => {
+    const text = await res.text();
+
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(
+        fallbackUrl
+          ? `Response bukan JSON dari: ${fallbackUrl}`
+          : "Response server bukan JSON"
+      );
+    }
+  };
+
   const resetForm = () => {
     setEditing(null);
     setPreview("");
@@ -71,7 +97,9 @@ export default function RekeningPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_URL}/api/rekening`, {
+      const url = `${API_URL}/api/rekening`;
+
+      const res = await fetch(url, {
         cache: "no-store",
         headers: {
           Accept: "application/json",
@@ -79,14 +107,7 @@ export default function RekeningPage() {
         },
       });
 
-      const text = await res.text();
-
-      let json: any = {};
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch {
-        throw new Error(`Response bukan JSON dari: ${API_URL}/api/rekening`);
-      }
+      const json = await safeJson(res, url);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal mengambil data rekening");
@@ -112,6 +133,7 @@ export default function RekeningPage() {
         ...form,
         metodePembayaran: "BANK",
       });
+      return;
     }
 
     if (value === "QRIS") {
@@ -187,14 +209,7 @@ export default function RekeningPage() {
         body: formData,
       });
 
-      const text = await res.text();
-
-      let json: any = {};
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch {
-        throw new Error(`Response bukan JSON dari: ${url}`);
-      }
+      const json = await safeJson(res, url);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal menyimpan rekening");
@@ -202,6 +217,7 @@ export default function RekeningPage() {
 
       resetForm();
       await loadData();
+
       alert(
         editing
           ? "Metode pembayaran berhasil diupdate"
@@ -227,7 +243,7 @@ export default function RekeningPage() {
       isActive: item.isActive !== false,
     });
 
-    setPreview(item.qrisImage ? `${API_URL}${item.qrisImage}` : "");
+    setPreview(item.qrisImage ? getFileUrl(item.qrisImage) : "");
     setQrisImage(null);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -241,21 +257,16 @@ export default function RekeningPage() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/rekening/${id}`, {
+      const url = `${API_URL}/api/rekening/${id}`;
+
+      const res = await fetch(url, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${getToken()}`,
         },
       });
 
-      const text = await res.text();
-
-      let json: any = {};
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch {
-        throw new Error("Response bukan JSON saat menghapus rekening");
-      }
+      const json = await safeJson(res, url);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal menghapus rekening");
@@ -284,36 +295,57 @@ export default function RekeningPage() {
   ).length;
 
   return (
-    <main className="min-h-screen bg-neutral-100 px-5 pb-10 pt-24 md:px-8 md:pt-8">
-      <div className="mx-auto w-full max-w-7xl space-y-8">
-        <section className="overflow-hidden rounded-[34px] border border-neutral-200 bg-white shadow-sm">
-          <div className="relative p-6 md:p-8">
-            <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-black/5 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 pb-10 pt-24 text-white md:px-8 md:pt-8">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[#07111f]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(6,182,212,0.18),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(37,99,235,0.20),transparent_32%),radial-gradient(circle_at_80%_85%,rgba(37,99,235,0.14),transparent_34%)]" />
 
-            <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-8">
+        <section className="relative overflow-hidden rounded-[34px] border border-cyan-500/20 bg-white/[0.04] shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(6,182,212,0.18),transparent_38%)]" />
+
+          <div className="relative p-6 md:p-8">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-bold text-white">
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300">
                   <CreditCard size={18} />
                   Payment Management
                 </div>
 
-                <h1 className="mt-5 text-4xl font-black text-black md:text-5xl">
+                <h1 className="mt-5 text-4xl font-black text-white md:text-5xl">
                   Metode Pembayaran
                 </h1>
 
-                <p className="mt-3 max-w-2xl text-neutral-500">
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-400 md:text-base">
                   Kelola rekening bank dan QRIS agar pelanggan bisa melakukan
-                  pembayaran dengan mudah.
+                  pembayaran dengan mudah, aman, dan cepat.
                 </p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-cyan-300">
+                    <ShieldCheck size={18} />
+                    Aman
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-cyan-300">
+                    <Landmark size={18} />
+                    Bank
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-cyan-300">
+                    <QrCode size={18} />
+                    QRIS
+                  </div>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={loadData}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-black px-5 py-4 font-bold text-white transition hover:opacity-90"
+                disabled={loading}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-4 font-bold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
               >
                 <RefreshCcw size={18} />
-                Refresh Data
+                {loading ? "Loading..." : "Refresh Data"}
               </button>
             </div>
           </div>
@@ -324,43 +356,43 @@ export default function RekeningPage() {
             title="Total Metode"
             value={data.length}
             icon={<CreditCard size={24} />}
-            className="bg-black text-white"
+            variant="cyan"
           />
           <StatCard
             title="BANK"
             value={totalBank}
             icon={<Landmark size={24} />}
-            className="bg-blue-600 text-white"
+            variant="blue"
           />
           <StatCard
             title="QRIS"
             value={totalQris}
             icon={<QrCode size={24} />}
-            className="bg-orange-500 text-white"
+            variant="orange"
           />
           <StatCard
             title="Aktif"
             value={totalActive}
             icon={<CheckCircle2 size={24} />}
-            className="bg-emerald-600 text-white"
+            variant="emerald"
           />
           <StatCard
             title="Tidak Aktif"
             value={totalInactive}
             icon={<XCircle size={24} />}
-            className="bg-red-500 text-white"
+            variant="red"
           />
         </section>
 
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm md:p-8">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
           <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="flex items-center gap-2 text-2xl font-black text-black">
-                <Plus size={26} />
+              <h2 className="flex items-center gap-2 text-2xl font-black text-white">
+                <Plus size={26} className="text-cyan-400" />
                 {editing ? "Edit Pembayaran" : "Tambah Pembayaran"}
               </h2>
 
-              <p className="mt-1 text-neutral-500">
+              <p className="mt-1 text-sm text-gray-400">
                 Pilih metode pembayaran. Form akan otomatis menyesuaikan.
               </p>
             </div>
@@ -369,7 +401,7 @@ export default function RekeningPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3 font-bold text-black transition hover:bg-neutral-200"
+                className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-bold text-cyan-300 transition hover:bg-cyan-500 hover:text-[#07111f]"
               >
                 <X size={18} />
                 Batal Edit
@@ -381,22 +413,26 @@ export default function RekeningPage() {
             <div className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-black">
+                  <label className="mb-2 block text-sm font-bold text-gray-300">
                     Metode Pembayaran
                   </label>
 
                   <select
                     value={form.metodePembayaran}
                     onChange={(e) => handleMetodeChange(e.target.value)}
-                    className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+                    className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
                   >
-                    <option value="BANK">BANK</option>
-                    <option value="QRIS">QRIS</option>
+                    <option className="bg-[#0b1627]" value="BANK">
+                      BANK
+                    </option>
+                    <option className="bg-[#0b1627]" value="QRIS">
+                      QRIS
+                    </option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-black">
+                  <label className="mb-2 block text-sm font-bold text-gray-300">
                     Status
                   </label>
 
@@ -408,81 +444,69 @@ export default function RekeningPage() {
                         isActive: e.target.value === "active",
                       })
                     }
-                    className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+                    className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
                   >
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Tidak Aktif</option>
+                    <option className="bg-[#0b1627]" value="active">
+                      Aktif
+                    </option>
+                    <option className="bg-[#0b1627]" value="inactive">
+                      Tidak Aktif
+                    </option>
                   </select>
                 </div>
               </div>
 
               {isBank && (
-                <div className="rounded-[28px] border border-blue-100 bg-blue-50/60 p-5">
+                <div className="rounded-[28px] border border-cyan-400/20 bg-cyan-500/5 p-5">
                   <div className="mb-5 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400">
                       <Landmark size={24} />
                     </div>
 
                     <div>
-                      <h3 className="font-black text-black">Data Rekening</h3>
-                      <p className="text-sm text-neutral-500">
+                      <h3 className="font-black text-white">Data Rekening</h3>
+                      <p className="text-sm text-gray-400">
                         Isi informasi rekening bank atau e-wallet.
                       </p>
                     </div>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-bold text-black">
-                        Nama Bank / E-Wallet
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Contoh: BCA / BRI / DANA"
-                        value={form.namaBank}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            namaBank: e.target.value,
-                          })
-                        }
-                        className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-black outline-none focus:border-black"
-                      />
-                    </div>
+                    <InputField
+                      label="Nama Bank / E-Wallet"
+                      placeholder="Contoh: BCA / BRI / DANA"
+                      value={form.namaBank}
+                      onChange={(value) =>
+                        setForm({
+                          ...form,
+                          namaBank: value,
+                        })
+                      }
+                    />
 
-                    <div>
-                      <label className="mb-2 block text-sm font-bold text-black">
-                        Nomor Rekening
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Masukkan nomor rekening"
-                        value={form.nomorRekening}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            nomorRekening: e.target.value,
-                          })
-                        }
-                        className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-black outline-none focus:border-black"
-                      />
-                    </div>
+                    <InputField
+                      label="Nomor Rekening"
+                      placeholder="Masukkan nomor rekening"
+                      value={form.nomorRekening}
+                      onChange={(value) =>
+                        setForm({
+                          ...form,
+                          nomorRekening: value,
+                        })
+                      }
+                    />
 
                     <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-bold text-black">
-                        Nama Pemilik
-                      </label>
-                      <input
-                        type="text"
+                      <InputField
+                        label="Nama Pemilik"
                         placeholder="Nama pemilik rekening"
                         value={form.namaPemilik}
-                        onChange={(e) =>
+                        onChange={(value) =>
                           setForm({
                             ...form,
-                            namaPemilik: e.target.value,
+                            namaPemilik: value,
                           })
                         }
-                        className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-black outline-none focus:border-black"
                       />
                     </div>
                   </div>
@@ -490,24 +514,24 @@ export default function RekeningPage() {
               )}
 
               {isQris && (
-                <div className="rounded-[28px] border border-orange-100 bg-orange-50/70 p-5">
+                <div className="rounded-[28px] border border-orange-400/20 bg-orange-500/10 p-5">
                   <div className="mb-5 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500 text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-300">
                       <QrCode size={24} />
                     </div>
 
                     <div>
-                      <h3 className="font-black text-black">Upload QRIS</h3>
-                      <p className="text-sm text-neutral-500">
+                      <h3 className="font-black text-white">Upload QRIS</h3>
+                      <p className="text-sm text-gray-400">
                         Upload gambar QRIS yang akan digunakan pelanggan.
                       </p>
                     </div>
                   </div>
 
-                  <label className="flex min-h-[150px] cursor-pointer flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-orange-300 bg-white px-5 py-6 text-center font-bold text-neutral-600 transition hover:border-orange-500 hover:text-black">
-                    <Upload size={34} className="mb-3 text-orange-500" />
+                  <label className="flex min-h-[150px] cursor-pointer flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-orange-300/30 bg-white/[0.04] px-5 py-6 text-center font-bold text-gray-300 transition hover:border-orange-300 hover:bg-orange-500/10 hover:text-white">
+                    <Upload size={34} className="mb-3 text-orange-300" />
                     Pilih Gambar QRIS
-                    <span className="mt-1 text-xs font-medium text-neutral-400">
+                    <span className="mt-1 text-xs font-medium text-gray-500">
                       PNG, JPG, JPEG, atau WEBP
                     </span>
 
@@ -525,7 +549,7 @@ export default function RekeningPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 font-bold text-white transition hover:opacity-90 disabled:opacity-50 md:w-fit"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-6 py-4 font-bold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50 md:w-fit"
               >
                 <Save size={20} />
                 {saving
@@ -536,27 +560,29 @@ export default function RekeningPage() {
               </button>
             </div>
 
-            <div className="rounded-[28px] border border-neutral-200 bg-neutral-50 p-5">
-              <h3 className="text-lg font-black text-black">Preview</h3>
-              <p className="mt-1 text-sm text-neutral-500">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+              <h3 className="text-lg font-black text-white">Preview</h3>
+              <p className="mt-1 text-sm text-gray-400">
                 Tampilan ringkas metode pembayaran yang sedang dibuat.
               </p>
 
-              <div className="mt-5 rounded-[24px] bg-white p-5 shadow-sm">
+              <div className="mt-5 rounded-[24px] border border-white/10 bg-[#0b1627]/70 p-5 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white ${
-                      isQris ? "bg-orange-500" : "bg-blue-600"
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                      isQris
+                        ? "bg-orange-500/15 text-orange-300"
+                        : "bg-cyan-500/15 text-cyan-300"
                     }`}
                   >
                     {isQris ? <QrCode size={24} /> : <Landmark size={24} />}
                   </div>
 
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
                       {form.metodePembayaran}
                     </p>
-                    <h4 className="font-black text-black">
+                    <h4 className="font-black text-white">
                       {isQris
                         ? "QRIS Payment"
                         : form.namaBank || "Nama Bank"}
@@ -566,16 +592,16 @@ export default function RekeningPage() {
 
                 {isBank && (
                   <div className="mt-5 space-y-3 text-sm">
-                    <div className="flex justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3">
-                      <span className="text-neutral-500">Nomor</span>
-                      <span className="font-bold text-black">
+                    <div className="flex justify-between gap-3 rounded-2xl bg-black/20 px-4 py-3">
+                      <span className="text-gray-400">Nomor</span>
+                      <span className="font-bold text-white">
                         {form.nomorRekening || "-"}
                       </span>
                     </div>
 
-                    <div className="flex justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3">
-                      <span className="text-neutral-500">Pemilik</span>
-                      <span className="font-bold text-black">
+                    <div className="flex justify-between gap-3 rounded-2xl bg-black/20 px-4 py-3">
+                      <span className="text-gray-400">Pemilik</span>
+                      <span className="font-bold text-white">
                         {form.namaPemilik || "-"}
                       </span>
                     </div>
@@ -591,7 +617,7 @@ export default function RekeningPage() {
                         className="h-64 w-full rounded-2xl object-cover"
                       />
                     ) : (
-                      <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 text-sm font-semibold text-neutral-400">
+                      <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.04] text-sm font-semibold text-gray-500">
                         Belum ada QRIS
                       </div>
                     )}
@@ -600,12 +626,12 @@ export default function RekeningPage() {
 
                 <div className="mt-5">
                   {form.isActive ? (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-600">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-sm font-bold text-emerald-300">
                       <CheckCircle2 size={16} />
                       Aktif
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-sm font-bold text-red-600">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-sm font-bold text-red-300">
                       <XCircle size={16} />
                       Tidak Aktif
                     </span>
@@ -616,13 +642,13 @@ export default function RekeningPage() {
           </div>
         </section>
 
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm md:p-8">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
           <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="text-2xl font-black text-black">
+              <h2 className="text-2xl font-black text-white">
                 Daftar Pembayaran
               </h2>
-              <p className="mt-1 text-neutral-500">
+              <p className="mt-1 text-sm text-gray-400">
                 Total: {data.length} metode pembayaran
               </p>
             </div>
@@ -630,19 +656,20 @@ export default function RekeningPage() {
             <button
               type="button"
               onClick={loadData}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 font-bold text-black transition hover:bg-neutral-200"
+              disabled={loading}
+              className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-cyan-300 transition hover:bg-cyan-500 hover:text-[#07111f] disabled:opacity-50"
             >
               <RefreshCcw size={18} />
-              Refresh
+              {loading ? "Loading..." : "Refresh"}
             </button>
           </div>
 
           {loading ? (
-            <div className="rounded-3xl bg-neutral-50 p-6 text-neutral-500">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-gray-400">
               Loading data pembayaran...
             </div>
           ) : data.length === 0 ? (
-            <div className="rounded-3xl bg-neutral-50 p-10 text-center text-neutral-500">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-10 text-center text-gray-400">
               Belum ada metode pembayaran.
             </div>
           ) : (
@@ -653,13 +680,15 @@ export default function RekeningPage() {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-[28px] border border-neutral-200 bg-neutral-50 p-5 transition hover:-translate-y-1 hover:shadow-lg"
+                    className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white ${
-                            itemIsQris ? "bg-orange-500" : "bg-blue-600"
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                            itemIsQris
+                              ? "bg-orange-500/15 text-orange-300"
+                              : "bg-cyan-500/15 text-cyan-300"
                           }`}
                         >
                           {itemIsQris ? (
@@ -670,10 +699,10 @@ export default function RekeningPage() {
                         </div>
 
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+                          <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
                             {item.metodePembayaran}
                           </p>
-                          <h3 className="font-black text-black">
+                          <h3 className="font-black text-white">
                             {itemIsQris
                               ? "QRIS Payment"
                               : item.namaBank || "-"}
@@ -682,11 +711,11 @@ export default function RekeningPage() {
                       </div>
 
                       {item.isActive === false ? (
-                        <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+                        <span className="rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-300">
                           Off
                         </span>
                       ) : (
-                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">
+                        <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
                           Aktif
                         </span>
                       )}
@@ -696,32 +725,32 @@ export default function RekeningPage() {
                       <div className="mt-5">
                         {item.qrisImage ? (
                           <img
-                            src={`${API_URL}${item.qrisImage}`}
+                            src={getFileUrl(item.qrisImage)}
                             alt="QRIS"
-                            className="h-48 w-full rounded-2xl object-cover"
+                            className="h-48 w-full rounded-2xl bg-black/20 object-contain"
                           />
                         ) : (
-                          <div className="flex h-48 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-neutral-400">
+                          <div className="flex h-48 items-center justify-center rounded-2xl bg-black/20 text-sm font-semibold text-gray-500">
                             Tidak ada gambar QRIS
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="mt-5 space-y-3 text-sm">
-                        <div className="rounded-2xl bg-white px-4 py-3">
-                          <p className="text-xs font-bold text-neutral-400">
+                        <div className="rounded-2xl bg-black/20 px-4 py-3">
+                          <p className="text-xs font-bold text-gray-500">
                             Nomor Rekening
                           </p>
-                          <p className="mt-1 font-black text-black">
+                          <p className="mt-1 break-all font-black text-white">
                             {item.nomorRekening || "-"}
                           </p>
                         </div>
 
-                        <div className="rounded-2xl bg-white px-4 py-3">
-                          <p className="text-xs font-bold text-neutral-400">
+                        <div className="rounded-2xl bg-black/20 px-4 py-3">
+                          <p className="text-xs font-bold text-gray-500">
                             Nama Pemilik
                           </p>
-                          <p className="mt-1 font-black text-black">
+                          <p className="mt-1 font-black text-white">
                             {item.namaPemilik || "-"}
                           </p>
                         </div>
@@ -732,7 +761,7 @@ export default function RekeningPage() {
                       <button
                         type="button"
                         onClick={() => handleEdit(item)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-black px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-bold text-[#07111f] shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-400"
                       >
                         <Pencil size={16} />
                         Edit
@@ -741,7 +770,7 @@ export default function RekeningPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(item.id)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500 hover:text-white"
                       >
                         <Trash2 size={16} />
                         Hapus
@@ -762,22 +791,59 @@ function StatCard({
   title,
   value,
   icon,
-  className,
+  variant,
 }: {
   title: string;
   value: number;
   icon: React.ReactNode;
-  className: string;
+  variant: "cyan" | "blue" | "orange" | "emerald" | "red";
 }) {
+  const styles: Record<typeof variant, string> = {
+    cyan: "border-cyan-400/20 bg-cyan-500/10 text-cyan-300",
+    blue: "border-blue-400/20 bg-blue-500/10 text-blue-300",
+    orange: "border-orange-400/20 bg-orange-500/10 text-orange-300",
+    emerald: "border-emerald-400/20 bg-emerald-500/10 text-emerald-300",
+    red: "border-red-400/20 bg-red-500/10 text-red-300",
+  };
+
   return (
-    <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm">
+    <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/5 backdrop-blur-md transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5">
       <div
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl ${className}`}
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${styles[variant]}`}
       >
         {icon}
       </div>
-      <p className="mt-4 text-sm font-semibold text-neutral-500">{title}</p>
-      <h2 className="mt-1 text-3xl font-black text-black">{value}</h2>
+
+      <p className="mt-4 text-sm font-semibold text-gray-400">{title}</p>
+      <h2 className="mt-1 text-3xl font-black text-white">{value}</h2>
+    </div>
+  );
+}
+
+function InputField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-bold text-gray-300">
+        {label}
+      </label>
+
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
+      />
     </div>
   );
 }

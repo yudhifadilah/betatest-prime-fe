@@ -15,6 +15,9 @@ import {
   QrCode,
   Landmark,
   AlertCircle,
+  MessageCircle,
+  Send,
+  X,
 } from "lucide-react";
 
 type VilogPackage = {
@@ -46,8 +49,27 @@ type OrderResponse = {
   };
 };
 
-const API_URL = 
-  process.env.NEXT_PUBLIC_API_URL;
+type ChatRoom = {
+  id: number;
+  orderId?: string;
+  buyerName?: string;
+  service?: string;
+  status?: "waiting" | "accepted" | "closed" | string;
+  isAccepted?: boolean;
+  acceptedBy?: number | null;
+  acceptedAt?: string | null;
+};
+
+type ChatMessage = {
+  id: number;
+  roomId: number;
+  senderName: string;
+  senderType: "buyer" | "admin" | "staff";
+  message: string;
+  createdAt?: string;
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export default function VilogPage() {
   const [vilogPackages, setVilogPackages] = useState<VilogPackage[]>([]);
@@ -77,6 +99,14 @@ export default function VilogPage() {
     status?: string;
   } | null>(null);
 
+  const [showInvoice, setShowInvoice] = useState(false);
+
+  const [showChat, setShowChat] = useState(false);
+  const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [loadingChat, setLoadingChat] = useState(false);
+
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -87,6 +117,34 @@ export default function VilogPage() {
       (item) => String(item.id) === String(selectedPaymentId)
     );
   }, [paymentMethods, selectedPaymentId]);
+
+  const mapChatRoom = (room?: ChatRoom | null): ChatRoom | null => {
+    if (!room) return null;
+
+    return {
+      ...room,
+      status: room.isAccepted === true ? "accepted" : room.status || "waiting",
+    };
+  };
+
+  const isRoomAccepted = (room?: ChatRoom | null) => {
+    return Boolean(
+      room?.isAccepted === true ||
+        room?.status === "accepted" ||
+        room?.acceptedBy ||
+        room?.acceptedAt
+    );
+  };
+
+  const isChatAccepted = isRoomAccepted(chatRoom);
+
+  const hasBuyerSentFirstMessage = chatMessages.some(
+    (item) => item.senderType === "buyer"
+  );
+
+  const isChatLocked = Boolean(
+    chatRoom?.id && hasBuyerSentFirstMessage && !isChatAccepted
+  );
 
   const bankMethods = paymentMethods.filter(
     (item) => item.metodePembayaran === "BANK"
@@ -224,6 +282,38 @@ export default function VilogPage() {
     getPaymentMethods();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const savedRoom = localStorage.getItem("vilog_chat_room");
+
+    if (!savedRoom) return;
+
+    try {
+      const room = JSON.parse(savedRoom) as ChatRoom;
+
+      if (!room?.id) return;
+
+      const mappedRoom = mapChatRoom(room);
+      setChatRoom(mappedRoom);
+
+      if (mappedRoom) {
+        localStorage.setItem("vilog_chat_room", JSON.stringify(mappedRoom));
+      }
+
+      fetchMessages(room.id);
+
+      const interval = setInterval(() => {
+        fetchMessages(room.id);
+      }, 3000);
+
+      return () => clearInterval(interval);
+    } catch (error) {
+      console.error("PARSE VILOG CHAT ROOM ERROR:", error);
+      localStorage.removeItem("vilog_chat_room");
+    }
+  }, []);
+
   const handlePaymentProofChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -240,6 +330,194 @@ export default function VilogPage() {
 
     setPaymentProof(file);
     setPaymentPreview(URL.createObjectURL(file));
+  };
+
+  const createChatRoom = async () => {
+    try {
+      if (typeof window !== "undefined") {
+        const savedRoom = localStorage.getItem("vilog_chat_room");
+
+        if (savedRoom) {
+          const parsedRoom = JSON.parse(savedRoom) as ChatRoom;
+
+          if (parsedRoom?.id) {
+            const mappedRoom = mapChatRoom(parsedRoom);
+            setChatRoom(mappedRoom);
+
+            if (mappedRoom) {
+              localStorage.setItem("vilog_chat_room", JSON.stringify(mappedRoom));
+            }
+
+            return mappedRoom;
+          }
+        }
+      }
+
+      const response = await fetch(`${API_URL}/api/chat/rooms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          buyerName: form.username || "Customer Vilog",
+          orderId: createdOrder?.orderId || `PRE-VILOG-${Date.now()}`,
+          service: "vilog",
+        }),
+      });
+
+      const result = await safeJson(response);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal membuat room chat");
+      }
+
+      const mappedRoom = mapChatRoom(result.data);
+
+      setChatRoom(mappedRoom);
+
+      if (mappedRoom && typeof window !== "undefined") {
+        localStorage.setItem("vilog_chat_room", JSON.stringify(mappedRoom));
+      }
+
+      return mappedRoom as ChatRoom;
+    } catch (error) {
+      console.error("CREATE VILOG CHAT ROOM ERROR:", error);
+      alert(error instanceof Error ? error.message : "Gagal membuat room chat");
+      return null;
+    }
+  };
+
+  const fetchMessages = async (roomId: number) => {
+    try {
+      const response = await fetch(`${API_URL}/api/chat/rooms/${roomId}/messages`, {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const result = await safeJson(response);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal mengambil pesan chat");
+      }
+
+      setChatMessages(result.data || []);
+
+      if (result.room) {
+        const mappedRoom = mapChatRoom(result.room);
+        setChatRoom(mappedRoom);
+
+        if (mappedRoom && typeof window !== "undefined") {
+          localStorage.setItem("vilog_chat_room", JSON.stringify(mappedRoom));
+        }
+      }
+    } catch (error) {
+      console.error("GET VILOG CHAT MESSAGES ERROR:", error);
+      setChatMessages([]);
+    }
+  };
+
+  const updateChatRoomOrderId = async (orderId: string) => {
+    try {
+      const room = chatRoom || (await createChatRoom());
+
+      if (!room?.id) return;
+
+      const response = await fetch(`${API_URL}/api/chat/rooms/${room.id}/order`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          orderId,
+          buyerName: form.username || room.buyerName || "Customer Vilog",
+        }),
+      });
+
+      const result = await safeJson(response);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal update Order ID chat");
+      }
+
+      const mappedRoom = mapChatRoom(result.data);
+      setChatRoom(mappedRoom);
+
+      if (mappedRoom && typeof window !== "undefined") {
+        localStorage.setItem("vilog_chat_room", JSON.stringify(mappedRoom));
+      }
+    } catch (error) {
+      console.error("UPDATE VILOG CHAT ORDER ERROR:", error);
+    }
+  };
+
+  const sendChat = async () => {
+    if (!chatInput.trim()) return;
+
+    if (isChatLocked) {
+      alert("Chat sudah terkirim. Tunggu admin menerima chat terlebih dahulu.");
+      return;
+    }
+
+    try {
+      setLoadingChat(true);
+
+      let room = chatRoom;
+
+      if (!room) {
+        room = await createChatRoom();
+      }
+
+      if (!room?.id) return;
+
+      const response = await fetch(`${API_URL}/api/chat/buyer/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          roomId: room.id,
+          senderName: form.username || "Customer",
+          message: chatInput.trim(),
+        }),
+      });
+
+      const result = await safeJson(response);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal mengirim pesan");
+      }
+
+      setChatInput("");
+      await fetchMessages(room.id);
+    } catch (error) {
+      console.error("SEND VILOG CHAT ERROR:", error);
+      alert(error instanceof Error ? error.message : "Gagal mengirim pesan");
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  const resetOrderForm = () => {
+    setShowInvoice(false);
+    setCreatedOrder(null);
+    setSelectedPackage(null);
+    setForm({
+      username: "",
+      password: "",
+      backupCode1: "",
+      backupCode2: "",
+      backupCode3: "",
+      contact: "",
+      nomorRekening: "",
+    });
+    setPaymentProof(null);
+    setPaymentPreview(null);
   };
 
   const handleOrder = async () => {
@@ -320,13 +598,19 @@ export default function VilogPage() {
         throw new Error(data.message || data.error || "Gagal membuat order");
       }
 
-      setCreatedOrder({
+      const newOrder = {
         id: data.data?.id,
         orderId: data.data?.orderId,
         status: data.data?.status,
-      });
+      };
 
-      alert("Order Vilog berhasil dibuat");
+      setCreatedOrder(newOrder);
+
+      if (newOrder.orderId) {
+        await updateChatRoomOrderId(newOrder.orderId);
+      }
+
+      setShowInvoice(true);
     } catch (error) {
       console.error("CREATE ORDER ERROR:", error);
       alert(error instanceof Error ? error.message : "Gagal membuat order Vilog");
@@ -334,6 +618,169 @@ export default function VilogPage() {
       setLoadingOrder(false);
     }
   };
+
+  const renderLiveChatWidget = () => (
+    <>
+      <button
+        type="button"
+        onClick={() => setShowChat(true)}
+        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500 text-[#07111f] shadow-2xl shadow-cyan-500/40 transition hover:scale-105"
+      >
+        <MessageCircle size={28} />
+      </button>
+
+      {showChat && (
+        <div className="fixed bottom-24 right-4 z-50 flex h-[560px] w-[calc(100vw-32px)] max-w-[380px] flex-col overflow-hidden rounded-[30px] border border-cyan-500/20 bg-[#07111f] shadow-[0_0_40px_rgba(0,255,255,0.15)] md:right-6">
+          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+            <div>
+              <h3 className="font-bold text-white">Live Chat Vilog</h3>
+              <p className="text-xs text-gray-400">
+                {isChatAccepted ? "Chat diterima Admin" : "Menunggu Admin menerima"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowChat(false)}
+              className="rounded-xl p-2 text-gray-400 transition hover:bg-white/10 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto bg-[#081423] p-4">
+            {chatMessages.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-center text-sm text-gray-500">
+                Belum ada pesan. Kamu hanya bisa mengirim 1 pesan awal. Setelah itu tunggu admin menerima chat.
+              </div>
+            ) : (
+              chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`mb-3 flex ${
+                    msg.senderType === "buyer" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-[24px] px-4 py-3 text-sm ${
+                      msg.senderType === "buyer"
+                        ? "bg-cyan-500 text-[#07111f]"
+                        : "bg-white/10 text-white"
+                    }`}
+                  >
+                    <p className="mb-1 text-[10px] font-bold opacity-60">
+                      {msg.senderName}
+                    </p>
+                    <p className="break-words">{msg.message}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="border-t border-white/10 p-4">
+            {isChatLocked && (
+              <div className="mb-3 rounded-2xl border border-yellow-400/20 bg-yellow-500/10 px-4 py-3 text-xs leading-5 text-yellow-200">
+                Pesan awal sudah dikirim. Chat akan aktif lagi setelah admin menerima chat ini.
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    sendChat();
+                  }
+                }}
+                placeholder={isChatLocked ? "Menunggu admin menerima chat..." : "Tulis pesan..."}
+                disabled={isChatLocked}
+                className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+
+              <button
+                type="button"
+                onClick={sendChat}
+                disabled={loadingChat || isChatLocked}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-500 text-[#07111f] transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Send size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  if (showInvoice && createdOrder) {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 py-10 text-white">
+        <div className="pointer-events-none fixed inset-0 z-0 bg-[#07111f]" />
+        <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(6,182,212,0.18),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(37,99,235,0.20),transparent_32%),radial-gradient(circle_at_80%_85%,rgba(37,99,235,0.14),transparent_34%)]" />
+
+        <div className="relative z-10 mx-auto max-w-3xl rounded-[32px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
+          <div className="text-center">
+            <CheckCircle2 className="mx-auto text-cyan-400" size={64} />
+            <h1 className="mt-4 text-3xl font-extrabold">Invoice Order Vilog</h1>
+            <p className="mt-2 text-sm text-gray-400">
+              Order Vilog berhasil dibuat. Simpan Order ID untuk cek transaksi.
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-4">
+            <InvoiceRow label="Order ID" value={createdOrder.orderId || "-"} />
+            <InvoiceRow label="Status" value={createdOrder.status || "pending"} />
+            <InvoiceRow label="Paket" value={selectedPackage?.namaProduk || "-"} />
+            <InvoiceRow
+              label="Harga"
+              value={
+                selectedPackage
+                  ? `Rp ${Number(selectedPackage.harga).toLocaleString("id-ID")}`
+                  : "-"
+              }
+            />
+            <InvoiceRow label="Username Roblox" value={form.username || "-"} />
+            <InvoiceRow label="Kontak" value={form.contact || "-"} />
+            <InvoiceRow label="Nomor Pengirim" value={form.nomorRekening || "-"} />
+            <InvoiceRow
+              label="Metode Pembayaran"
+              value={
+                selectedPayment?.metodePembayaran === "QRIS"
+                  ? "QRIS"
+                  : `${selectedPayment?.namaBank || "BANK"} - ${
+                      selectedPayment?.nomorRekening || "-"
+                    }`
+              }
+            />
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() =>
+                (window.location.href = `/cek-transaksi?orderId=${createdOrder.orderId}`)
+              }
+              className="flex-1 rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-extrabold text-[#07111f] transition hover:bg-cyan-400"
+            >
+              Cek Transaksi
+            </button>
+
+            <button
+              type="button"
+              onClick={resetOrderForm}
+              className="flex-1 rounded-2xl border border-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              Buat Order Baru
+            </button>
+          </div>
+        </div>
+
+        {renderLiveChatWidget()}
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 py-8 text-white">
@@ -421,21 +868,6 @@ export default function VilogPage() {
                         : "border-white/10 bg-white/[0.04] hover:border-cyan-400/40 hover:bg-cyan-500/5"
                     }`}
                   >
-                    {isFirstCard && (
-                      <>
-                        <div className="absolute bottom-0 right-0 top-0 w-[46%] overflow-hidden rounded-r-[28px]">
-                          <Image
-                            src="/images/char1.png"
-                            alt="Vilog Character"
-                            width={230}
-                            height={230}
-                            className="absolute bottom-0 right-[-12px] h-[215px] w-auto object-contain object-bottom opacity-95"
-                          />
-                        </div>
-
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#07111f] via-[#07111f]/95 to-[#07111f]/5" />
-                      </>
-                    )}
 
                     <div className="relative z-10 flex min-h-[190px] flex-col">
                       <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
@@ -461,7 +893,8 @@ export default function VilogPage() {
                       <h4 className="mt-4 text-xl font-extrabold text-cyan-400">
                         Rp {Number(pkg.harga).toLocaleString("id-ID")}
                       </h4>
-
+<br>
+</br>
                       <button
                         type="button"
                         onClick={() => getDetailVilogProduct(pkg.id)}
@@ -795,6 +1228,8 @@ export default function VilogPage() {
           </section>
         )}
       </div>
+
+      {renderLiveChatWidget()}
     </main>
   );
 }
@@ -810,6 +1245,22 @@ function PaymentInfo({
     <div className="rounded-2xl bg-black/20 px-4 py-3">
       <p className="text-xs text-emerald-200/70">{label}</p>
       <p className="mt-1 break-all text-sm font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+
+function InvoiceRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-sm text-gray-400">{label}</span>
+      <span className="break-all text-sm font-bold text-cyan-300">{value}</span>
     </div>
   );
 }

@@ -18,6 +18,8 @@ type RegisterResponse = {
   };
 };
 
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -37,10 +39,15 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!API_URL) {
+      alert("NEXT_PUBLIC_API_URL belum diatur di file .env");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const response = await fetch("http://192.168.1.7:3030/api/auth/register", {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         mode: "cors",
         headers: {
@@ -71,6 +78,11 @@ export default function RegisterPage() {
 
       if (response.status === 400) {
         alert(data?.message || data?.error || "Data register tidak valid");
+        return;
+      }
+
+      if (!response.ok) {
+        alert(data?.message || data?.error || "Register gagal");
         return;
       }
 

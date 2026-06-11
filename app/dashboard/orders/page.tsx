@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import {
   Plus,
   Pencil,
@@ -64,7 +65,9 @@ export default function DashboardVilogPage() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [visibleSecrets, setVisibleSecrets] = useState<Record<number, boolean>>({});
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<number, boolean>>(
+    {}
+  );
 
   const [selectedCompleteOrder, setSelectedCompleteOrder] =
     useState<VilogOrder | null>(null);
@@ -448,14 +451,14 @@ export default function DashboardVilogPage() {
 
     const style =
       current === "completed" || current === "success"
-        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+        ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
         : current === "processing"
-        ? "bg-blue-100 text-blue-700 border-blue-200"
+        ? "border-blue-400/20 bg-blue-500/10 text-blue-300"
         : current === "cancelled"
-        ? "bg-red-100 text-red-700 border-red-200"
+        ? "border-red-400/20 bg-red-500/10 text-red-300"
         : current === "unpaid"
-        ? "bg-neutral-100 text-neutral-700 border-neutral-200"
-        : "bg-yellow-100 text-yellow-700 border-yellow-200";
+        ? "border-gray-400/20 bg-gray-500/10 text-gray-300"
+        : "border-yellow-400/20 bg-yellow-500/10 text-yellow-300";
 
     const label =
       current === "completed" || current === "success"
@@ -469,50 +472,49 @@ export default function DashboardVilogPage() {
         : "Pending";
 
     return (
-      <span
-        className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${style}`}
-      >
+      <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${style}`}>
         {label}
       </span>
     );
   };
 
   return (
-    <main className="min-h-screen bg-neutral-100 px-5 pb-10 pt-24 md:px-8 md:pt-8">
-      <div className="mx-auto w-full max-w-7xl space-y-8">
-        <section className="overflow-hidden rounded-[34px] border border-neutral-200 bg-white shadow-sm">
-          <div className="relative p-6 md:p-8">
-            <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-black/5 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 pb-10 pt-24 text-white md:px-8 md:pt-8">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[#07111f]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(6,182,212,0.18),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(37,99,235,0.20),transparent_32%),radial-gradient(circle_at_80%_85%,rgba(37,99,235,0.14),transparent_34%)]" />
 
-            <div className="relative flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-bold text-white">
-                  <ShieldCheck size={18} />
-                  Vilog Management
-                </div>
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-8">
+        <section className="relative overflow-hidden rounded-[34px] border border-cyan-500/20 bg-white/[0.04] shadow-2xl shadow-cyan-500/10 backdrop-blur-md">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(6,182,212,0.18),transparent_38%)]" />
 
-                <h1 className="mt-5 text-4xl font-black text-black md:text-5xl">
-                  Dashboard Vilog
-                </h1>
-
-                <p className="mt-3 max-w-2xl text-neutral-500">
-                  Kelola produk vilog, pantau order pelanggan, dan upload bukti
-                  penyelesaian order dalam satu halaman modern.
-                </p>
+          <div className="relative flex flex-col justify-between gap-6 p-6 md:p-8 xl:flex-row xl:items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300">
+                <ShieldCheck size={18} />
+                Vilog Management
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  getProducts();
-                  getOrders();
-                }}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-black px-5 py-4 font-bold text-white shadow-lg transition hover:opacity-90"
-              >
-                <RefreshCw size={20} />
-                Refresh Data
-              </button>
+              <h1 className="mt-5 text-4xl font-black text-white md:text-5xl">
+                Dashboard Vilog
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-gray-400">
+                Kelola produk vilog, pantau order pelanggan, dan upload bukti
+                penyelesaian order dalam satu halaman modern.
+              </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                getProducts();
+                getOrders();
+              }}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-4 font-bold text-[#07111f] shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400"
+            >
+              <RefreshCw size={20} />
+              Refresh Data
+            </button>
           </div>
         </section>
 
@@ -544,17 +546,17 @@ export default function DashboardVilogPage() {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
                 <Package size={24} />
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-black">
+                <h2 className="text-2xl font-black text-white">
                   {editingId ? "Edit Produk" : "Tambah Produk"}
                 </h2>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-gray-400">
                   Atur nama, deskripsi, harga, dan status produk.
                 </p>
               </div>
@@ -565,24 +567,14 @@ export default function DashboardVilogPage() {
                 label="Nama Produk"
                 placeholder="Vilog Basic"
                 value={form.namaProduk}
-                onChange={(value) =>
-                  setForm({
-                    ...form,
-                    namaProduk: value,
-                  })
-                }
+                onChange={(value) => setForm({ ...form, namaProduk: value })}
               />
 
               <InputField
                 label="Deskripsi"
                 placeholder="Vilog akun Roblox basic"
                 value={form.deskripsi}
-                onChange={(value) =>
-                  setForm({
-                    ...form,
-                    deskripsi: value,
-                  })
-                }
+                onChange={(value) => setForm({ ...form, deskripsi: value })}
               />
 
               <InputField
@@ -590,31 +582,27 @@ export default function DashboardVilogPage() {
                 type="number"
                 placeholder="10000"
                 value={form.harga}
-                onChange={(value) =>
-                  setForm({
-                    ...form,
-                    harga: value,
-                  })
-                }
+                onChange={(value) => setForm({ ...form, harga: value })}
               />
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-black">
+                <label className="mb-2 block text-sm font-bold text-gray-300">
                   Status Produk
                 </label>
 
                 <select
                   value={form.isActive ? "true" : "false"}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      isActive: e.target.value === "true",
-                    })
+                    setForm({ ...form, isActive: e.target.value === "true" })
                   }
-                  className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+                  className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
                 >
-                  <option value="true">Aktif</option>
-                  <option value="false">Nonaktif</option>
+                  <option value="true" className="bg-[#07111f]">
+                    Aktif
+                  </option>
+                  <option value="false" className="bg-[#07111f]">
+                    Nonaktif
+                  </option>
                 </select>
               </div>
             </div>
@@ -624,7 +612,7 @@ export default function DashboardVilogPage() {
                 type="button"
                 onClick={submitProduct}
                 disabled={saving}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-6 py-4 font-bold text-[#07111f] shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
               >
                 {editingId ? <Save size={20} /> : <Plus size={20} />}
                 {saving
@@ -638,7 +626,7 @@ export default function DashboardVilogPage() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-2xl bg-neutral-100 px-6 py-4 font-bold text-black transition hover:bg-neutral-200"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 font-bold text-cyan-300 transition hover:bg-white/10"
                 >
                   Batal
                 </button>
@@ -646,13 +634,13 @@ export default function DashboardVilogPage() {
             </div>
           </div>
 
-          <div className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
             <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
-                <h2 className="text-2xl font-black text-black">
+                <h2 className="text-2xl font-black text-white">
                   Daftar Produk
                 </h2>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-gray-400">
                   Total {filteredProducts.length} produk ditemukan.
                 </p>
               </div>
@@ -673,34 +661,32 @@ export default function DashboardVilogPage() {
                 {filteredProducts.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-[26px] border border-neutral-200 bg-neutral-50 p-5 transition hover:-translate-y-1 hover:shadow-lg"
+                    className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-black text-black">
+                        <h3 className="font-black text-white">
                           {item.namaProduk}
                         </h3>
-                        <p className="mt-1 line-clamp-2 text-sm text-neutral-500">
+                        <p className="mt-1 line-clamp-2 text-sm text-gray-400">
                           {item.deskripsi || "-"}
                         </p>
                       </div>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        className={`rounded-full border px-3 py-1 text-xs font-bold ${
                           item.isActive
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-red-100 text-red-700"
+                            ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
+                            : "border-red-400/20 bg-red-500/10 text-red-300"
                         }`}
                       >
                         {item.isActive ? "Aktif" : "Nonaktif"}
                       </span>
                     </div>
 
-                    <div className="mt-5 rounded-2xl bg-white px-4 py-3">
-                      <p className="text-xs font-bold text-neutral-400">
-                        Harga
-                      </p>
-                      <p className="mt-1 text-xl font-black text-black">
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                      <p className="text-xs font-bold text-gray-400">Harga</p>
+                      <p className="mt-1 text-xl font-black text-cyan-400">
                         {formatRupiah(item.harga)}
                       </p>
                     </div>
@@ -709,7 +695,7 @@ export default function DashboardVilogPage() {
                       <button
                         type="button"
                         onClick={() => editProduct(item)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-black px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-bold text-[#07111f] transition hover:bg-cyan-400"
                       >
                         <Pencil size={16} />
                         Edit
@@ -718,7 +704,7 @@ export default function DashboardVilogPage() {
                       <button
                         type="button"
                         onClick={() => deleteProduct(item.id)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500/20"
                       >
                         <Trash2 size={16} />
                         Hapus
@@ -731,14 +717,14 @@ export default function DashboardVilogPage() {
           </div>
         </section>
 
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
           <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="flex items-center gap-3 text-2xl font-black text-black">
-                <ShoppingCart size={26} />
+              <h2 className="flex items-center gap-3 text-2xl font-black text-white">
+                <ShoppingCart size={26} className="text-cyan-400" />
                 Order Vilog
               </h2>
-              <p className="mt-1 text-neutral-500">
+              <p className="mt-1 text-gray-400">
                 Kelola status order dan lihat bukti pembayaran pelanggan.
               </p>
             </div>
@@ -762,25 +748,14 @@ export default function DashboardVilogPage() {
                 return (
                   <div
                     key={order.id}
-                    className="rounded-[28px] border border-neutral-200 bg-neutral-50 p-5 transition hover:shadow-lg"
+                    className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 transition hover:border-cyan-400/40 hover:bg-cyan-500/5"
                   >
                     <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
                       <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <InfoBlock
-                          label="Order ID"
-                          value={order.orderId || "-"}
-                          bold
-                        />
-                        <InfoBlock
-                          label="Username"
-                          value={order.robloxUsername || "-"}
-                        />
+                        <InfoBlock label="Order ID" value={order.orderId || "-"} bold />
+                        <InfoBlock label="Username" value={order.robloxUsername || "-"} />
                         <InfoBlock label="Produk" value={produk.namaProduk} />
-                        <InfoBlock
-                          label="Harga"
-                          value={formatRupiah(produk.harga)}
-                          bold
-                        />
+                        <InfoBlock label="Harga" value={formatRupiah(produk.harga)} bold />
                       </div>
 
                       <div>{getStatusBadge(order.status)}</div>
@@ -788,18 +763,13 @@ export default function DashboardVilogPage() {
 
                     <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                       <InfoBlock label="Kontak" value={order.contact || "-"} />
-                      <InfoBlock
-                        label="Rekening"
-                        value={order.nomorRekening || "-"}
-                      />
+                      <InfoBlock label="Rekening" value={order.nomorRekening || "-"} />
 
                       <ProofButton
                         label="Bukti Bayar"
                         available={Boolean(order.paymentProof)}
                         onClick={() =>
-                          setPreviewImage(
-                            normalizePaymentUrl(order.paymentProof)
-                          )
+                          setPreviewImage(normalizePaymentUrl(order.paymentProof))
                         }
                       />
 
@@ -808,20 +778,18 @@ export default function DashboardVilogPage() {
                         available={Boolean(order.completionProof)}
                         success
                         onClick={() =>
-                          setPreviewImage(
-                            normalizePaymentUrl(order.completionProof)
-                          )
+                          setPreviewImage(normalizePaymentUrl(order.completionProof))
                         }
                       />
                     </div>
 
-                    <div className="mt-5 rounded-[24px] border border-neutral-200 bg-white p-4">
+                    <div className="mt-5 rounded-[24px] border border-white/10 bg-black/20 p-4">
                       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                         <div>
-                          <p className="text-sm font-black text-black">
+                          <p className="text-sm font-black text-white">
                             Data Login Roblox
                           </p>
-                          <p className="text-xs text-neutral-500">
+                          <p className="text-xs text-gray-400">
                             Password dan backup code hanya tampil setelah tombol dibuka.
                           </p>
                         </div>
@@ -829,7 +797,7 @@ export default function DashboardVilogPage() {
                         <button
                           type="button"
                           onClick={() => toggleSecret(order.id)}
-                          className="flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3 text-sm font-bold text-black transition hover:bg-neutral-200"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500 hover:text-[#07111f]"
                         >
                           {visibleSecrets[order.id] ? (
                             <>
@@ -847,6 +815,12 @@ export default function DashboardVilogPage() {
 
                       <div className="mt-4 grid gap-4 md:grid-cols-2">
                         <SecretBlock
+                          label="Roblox Username"
+                          value={order.robloxUsername || "-"}
+                          visible={true}
+                        />
+
+                        <SecretBlock
                           label="Roblox Password"
                           value={order.robloxPassword || "-"}
                           visible={Boolean(visibleSecrets[order.id])}
@@ -860,7 +834,7 @@ export default function DashboardVilogPage() {
                     </div>
 
                     <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="flex items-center gap-2 text-sm text-neutral-500">
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
                         <Clock3 size={16} />
                         {order.createdAt
                           ? new Date(order.createdAt).toLocaleString("id-ID")
@@ -869,16 +843,14 @@ export default function DashboardVilogPage() {
 
                       <select
                         value={order.status || "pending"}
-                        onChange={(e) =>
-                          updateOrderStatus(order.id, e.target.value)
-                        }
-                        className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-bold text-black outline-none focus:border-black"
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                        className="rounded-2xl border border-white/10 bg-[#0b1627]/90 px-4 py-3 text-sm font-bold text-white outline-none focus:border-cyan-400"
                       >
-                        <option value="unpaid">Unpaid</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="unpaid" className="bg-[#07111f]">Unpaid</option>
+                        <option value="pending" className="bg-[#07111f]">Pending</option>
+                        <option value="processing" className="bg-[#07111f]">Processing</option>
+                        <option value="completed" className="bg-[#07111f]">Completed</option>
+                        <option value="cancelled" className="bg-[#07111f]">Cancelled</option>
                       </select>
                     </div>
                   </div>
@@ -891,11 +863,11 @@ export default function DashboardVilogPage() {
 
       {previewImage && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl rounded-[32px] bg-white p-4">
+          <div className="relative w-full max-w-4xl rounded-[32px] border border-cyan-500/20 bg-[#07111f] p-4 shadow-2xl shadow-cyan-500/20">
             <button
               type="button"
               onClick={() => setPreviewImage(null)}
-              className="absolute -right-3 -top-3 rounded-full bg-white p-2 shadow-lg"
+              className="absolute -right-3 -top-3 rounded-full border border-white/10 bg-[#07111f] p-2 text-white shadow-lg"
             >
               <XCircle />
             </button>
@@ -911,17 +883,14 @@ export default function DashboardVilogPage() {
 
       {selectedCompleteOrder && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-5 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[32px] bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-xl rounded-[32px] border border-cyan-500/20 bg-[#07111f] p-6 shadow-2xl shadow-cyan-500/20">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-black text-black">
+                <h2 className="text-2xl font-black text-white">
                   Upload Bukti Completed
                 </h2>
-                <p className="mt-1 text-sm text-neutral-500">
-                  Order ID:{" "}
-                  <span className="font-bold text-black">
-                    {selectedCompleteOrder.orderId}
-                  </span>
+                <p className="mt-1 text-sm text-gray-400">
+                  Order ID: <span className="font-bold text-cyan-400">{selectedCompleteOrder.orderId}</span>
                 </p>
               </div>
 
@@ -932,20 +901,20 @@ export default function DashboardVilogPage() {
                   setCompletionProof(null);
                   setCompletionPreview(null);
                 }}
-                className="rounded-full bg-neutral-100 p-2"
+                className="rounded-full border border-white/10 bg-white/5 p-2 text-white"
               >
                 <XCircle />
               </button>
             </div>
 
-            <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[26px] border-2 border-dashed border-neutral-300 bg-neutral-50 p-8 text-center transition hover:border-black">
-              <Upload size={38} className="text-neutral-500" />
+            <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[26px] border-2 border-dashed border-cyan-400/30 bg-cyan-500/5 p-8 text-center transition hover:border-cyan-400">
+              <Upload size={38} className="text-cyan-400" />
 
-              <p className="mt-3 font-bold text-black">
+              <p className="mt-3 font-bold text-white">
                 Upload screenshot bukti selesai
               </p>
 
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-1 text-sm text-gray-400">
                 PNG, JPG, JPEG, atau WEBP
               </p>
 
@@ -958,17 +927,17 @@ export default function DashboardVilogPage() {
             </label>
 
             {completionPreview && (
-              <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200">
+              <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-[#0b1627]">
                 <img
                   src={completionPreview}
                   alt="Preview bukti completed"
-                  className="max-h-80 w-full bg-neutral-100 object-contain"
+                  className="max-h-80 w-full object-contain"
                 />
               </div>
             )}
 
             {completionProof && (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-emerald-700">
+              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-300">
                 <CheckCircle2 size={20} />
                 <span className="font-bold">{completionProof.name}</span>
               </div>
@@ -978,7 +947,7 @@ export default function DashboardVilogPage() {
               type="button"
               onClick={submitCompletedStatus}
               disabled={uploadingComplete}
-              className="mt-5 w-full rounded-2xl bg-black px-5 py-4 font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+              className="mt-5 w-full rounded-2xl bg-cyan-500 px-5 py-4 font-bold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
             >
               {uploadingComplete ? "Mengupload..." : "Selesaikan Order"}
             </button>
@@ -998,17 +967,17 @@ function StatCard({
   title: string;
   value: string | number;
   subtitle: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   return (
-    <div className="group rounded-[28px] border border-neutral-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 text-black transition group-hover:bg-black group-hover:text-white">
+    <div className="group rounded-[28px] border border-cyan-500/20 bg-white/[0.04] p-5 shadow-xl shadow-cyan-500/10 backdrop-blur-md transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400 transition group-hover:bg-cyan-500 group-hover:text-[#07111f]">
         {icon}
       </div>
 
-      <p className="mt-5 text-sm font-bold text-neutral-500">{title}</p>
-      <h2 className="mt-2 text-3xl font-black text-black">{value}</h2>
-      <p className="mt-2 text-sm text-neutral-400">{subtitle}</p>
+      <p className="mt-5 text-sm font-bold text-gray-400">{title}</p>
+      <h2 className="mt-2 text-3xl font-black text-white">{value}</h2>
+      <p className="mt-2 text-sm text-gray-500">{subtitle}</p>
     </div>
   );
 }
@@ -1023,14 +992,14 @@ function SearchBox({
   placeholder: string;
 }) {
   return (
-    <div className="flex w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 md:w-[320px]">
-      <Search size={18} className="text-neutral-400" />
+    <div className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/90 px-4 py-3 md:w-[320px]">
+      <Search size={18} className="text-cyan-400" />
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent text-sm text-black outline-none placeholder:text-neutral-400"
+        className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
       />
     </div>
   );
@@ -1051,13 +1020,13 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-black">{label}</label>
+      <label className="mb-2 block text-sm font-bold text-gray-300">{label}</label>
       <input
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+        className="w-full rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
       />
     </div>
   );
@@ -1073,11 +1042,11 @@ function InfoBlock({
   bold?: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3">
-      <p className="text-xs font-bold text-neutral-400">{label}</p>
+    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+      <p className="text-xs font-bold text-gray-400">{label}</p>
       <p
         className={`mt-1 truncate text-sm ${
-          bold ? "font-black text-black" : "font-semibold text-neutral-700"
+          bold ? "font-black text-cyan-400" : "font-semibold text-gray-200"
         }`}
       >
         {value}
@@ -1085,7 +1054,6 @@ function InfoBlock({
     </div>
   );
 }
-
 
 function ProofButton({
   label,
@@ -1099,24 +1067,24 @@ function ProofButton({
   success?: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3">
-      <p className="text-xs font-bold text-neutral-400">{label}</p>
+    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+      <p className="text-xs font-bold text-gray-400">{label}</p>
 
       {available ? (
         <button
           type="button"
           onClick={onClick}
-          className={`mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold ${
+          className={`mt-2 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold ${
             success
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-neutral-100 text-black"
+              ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
+              : "border-cyan-400/20 bg-cyan-500/10 text-cyan-300"
           }`}
         >
           <Eye size={16} />
           Lihat
         </button>
       ) : (
-        <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-neutral-400">
+        <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-500">
           <AlertCircle size={16} />
           Tidak ada
         </div>
@@ -1137,11 +1105,11 @@ function SecretBlock({
   const masked = value && value !== "-" ? "••••••••••••" : "-";
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
         {label}
       </p>
-      <p className="mt-2 break-all rounded-xl bg-white px-3 py-2 font-mono text-sm font-bold text-black">
+      <p className="mt-2 break-all rounded-xl border border-white/10 bg-black/20 px-3 py-2 font-mono text-sm font-bold text-white">
         {visible ? value || "-" : masked}
       </p>
     </div>
@@ -1158,8 +1126,8 @@ function BackupCodeBlock({
   const items = codes.length > 0 ? codes : ["-"];
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-neutral-400">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
         Backup Code
       </p>
 
@@ -1167,7 +1135,7 @@ function BackupCodeBlock({
         {items.map((code, index) => (
           <span
             key={`${code}-${index}`}
-            className="rounded-xl bg-white px-3 py-2 font-mono text-sm font-bold text-black"
+            className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 font-mono text-sm font-bold text-white"
           >
             {visible ? code : code === "-" ? "-" : "••••••"}
           </span>
@@ -1179,18 +1147,14 @@ function BackupCodeBlock({
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[30px] border border-dashed border-neutral-300 bg-neutral-50 p-10 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-white shadow-sm">
-        <AlertCircle size={30} className="text-neutral-400" />
+    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[30px] border border-dashed border-cyan-400/20 bg-white/[0.04] p-10 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
+        <AlertCircle size={30} />
       </div>
 
-      <h3 className="mt-5 text-lg font-black text-black">
-        Tidak Ada Data
-      </h3>
+      <h3 className="mt-5 text-lg font-black text-white">Tidak Ada Data</h3>
 
-      <p className="mt-2 max-w-sm text-sm text-neutral-500">
-        {text}
-      </p>
+      <p className="mt-2 max-w-sm text-sm text-gray-400">{text}</p>
     </div>
   );
 }

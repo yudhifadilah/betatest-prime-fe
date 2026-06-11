@@ -13,15 +13,24 @@ export default function LimsUpload({
   paymentPreview,
   onChange,
 }: Props) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const allowedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+    ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert("File harus berupa PNG, JPG, JPEG, atau WEBP");
+      alert(
+        "File harus berupa PNG, JPG, JPEG, atau WEBP"
+      );
       return;
     }
 
@@ -29,17 +38,22 @@ export default function LimsUpload({
   };
 
   return (
-    <div className="rounded-[28px] border border-dashed border-neutral-300 p-5">
-      <h3 className="text-xl font-bold text-black">Upload Bukti Pembayaran</h3>
+    <div className="rounded-[24px] border-2 border-dashed border-cyan-400/30 bg-cyan-500/5 p-4">
+      <h3 className="text-lg font-extrabold text-white">
+        Upload Bukti Pembayaran
+      </h3>
 
-      <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-[24px] bg-neutral-50 p-8 text-center transition hover:bg-neutral-100">
-        <Upload size={40} className="text-neutral-500" />
+      <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.04] p-6 text-center transition hover:bg-cyan-500/10">
+        <Upload
+          size={34}
+          className="text-cyan-400"
+        />
 
-        <p className="mt-3 font-semibold text-black">
+        <p className="mt-3 text-sm font-bold text-white">
           Upload screenshot pembayaran
         </p>
 
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-xs text-gray-400">
           PNG, JPG, JPEG, atau WEBP
         </p>
 
@@ -52,19 +66,21 @@ export default function LimsUpload({
       </label>
 
       {paymentPreview && (
-        <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200">
+        <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-[#0b1627]">
           <img
             src={paymentPreview}
             alt="Preview bukti pembayaran"
-            className="max-h-80 w-full bg-neutral-100 object-contain"
+            className="max-h-72 w-full object-contain"
           />
         </div>
       )}
 
       {paymentProof && (
-        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-emerald-700">
-          <CheckCircle2 size={20} />
-          <span className="font-semibold">{paymentProof.name}</span>
+        <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">
+          <CheckCircle2 size={18} />
+          <span className="font-bold">
+            {paymentProof.name}
+          </span>
         </div>
       )}
     </div>

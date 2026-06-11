@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ShoppingCart,
@@ -11,6 +11,8 @@ import {
   Skull,
   Search,
   CheckCircle2,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 
 import LimsChat from "@/components/lims/LimsChat";
@@ -38,31 +40,104 @@ export type SelectedLimsPackage = LimsPackage & {
   kategori: PackageCategory;
 };
 
+type RobloxCatalogItemRaw = {
+  id?: number;
+  name?: string;
+  price?: number;
+  lowestPrice?: number;
+  itemRestrictions?: string[];
+  collectibleItemId?: string;
+};
+
+type RobloxThumbnailRaw = {
+  targetId?: number;
+  imageUrl?: string;
+  state?: string;
+};
+
 type TumbalItem = {
   id: number;
   namaItem: string;
   assetId: string;
   harga: number;
-  isActive?: boolean;
+  robloxImage: string;
+  marketplaceUrl: string;
+  isLimited: boolean;
+  isRobloxItem: boolean;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const MIN_TUMBAL_PRICE = 100;
+const MAX_TUMBAL_PRICE = 300;
 
-async function getTumbalItemsApi(): Promise<TumbalItem[]> {
-  const res = await fetch(`${API_URL}/api/tumbal`, {
-    cache: "no-store",
+const getRobloxMarketplaceUrl = (assetId: string | number) => {
+  return `https://www.roblox.com/catalog/${assetId}`;
+};
+
+const getItemPrice = (item: RobloxCatalogItemRaw) => {
+  return Number(item.lowestPrice ?? item.price ?? 0);
+};
+
+const isLimitedRobloxItemItem = (item: RobloxCatalogItemRaw) => {
+  const restrictions = item.itemRestrictions || [];
+
+  const hasLimitedRestriction =
+    restrictions.includes("Limited") ||
+    restrictions.includes("LimitedUnique") ||
+    restrictions.includes("Collectible");
+
+  const price = getItemPrice(item);
+
+  return (
+    Boolean(item.id) &&
+    hasLimitedRestriction &&
+    price >= MIN_TUMBAL_PRICE &&
+    price <= MAX_TUMBAL_PRICE
+  );
+};
+
+async function getRobloxTumbalItemsApi(): Promise<TumbalItem[]> {
+  const fixedItems = [
+    {
+      id: 4771699155,
+      namaItem: "Egg of Hidden Treasures",
+    },
+    {
+      id: 1556204905,
+      namaItem: "Inkwell Egg",
+    },
+    {
+      id: 2528066922,
+      namaItem: "Catrin Dia de Muertos Mask",
+    },
+    {
+      id: 4773569689,
+      namaItem: "Epic Egg",
+    },
+    {
+      id: 4773591735,
+      namaItem: "Saber Boss Egg",
+    },
+    {
+      id: 4786877411,
+      namaItem: "Tiny Tank Egg",
+    },
+  ];
+
+  return fixedItems.map((item) => {
+    const assetId = String(item.id);
+
+    return {
+      id: item.id,
+      namaItem: item.namaItem,
+      assetId,
+      harga: 0,
+      robloxImage: `/api/roblox-thumbnail?assetId=${assetId}`,
+      marketplaceUrl: `https://www.roblox.com/catalog/${assetId}`,
+      isLimited: true,
+      isRobloxItem: true,
+    };
   });
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    throw new Error(json.message || "Gagal mengambil daftar tumbal");
-  }
-
-  return json.data || [];
 }
-
-
 
 export default function LimitedItemPage() {
   const router = useRouter();
@@ -102,11 +177,11 @@ export default function LimitedItemPage() {
     item.namaItem.toLowerCase().includes(search.toLowerCase())
   );
 
-  const tumbalList = tumbalItems
-    .filter((item) => item.isActive !== false)
-    .filter((item) =>
+  const tumbalList = useMemo(() => {
+    return tumbalItems.filter((item) =>
       item.namaItem.toLowerCase().includes(search.toLowerCase())
     );
+  }, [tumbalItems, search]);
 
   const loadProducts = async () => {
     try {
@@ -123,31 +198,41 @@ export default function LimitedItemPage() {
   const loadTumbalItems = async () => {
     try {
       setLoadingTumbal(true);
-      const data = await getTumbalItemsApi();
+
+      const data = await getRobloxTumbalItemsApi();
+
       setTumbalItems(data);
     } catch (error) {
       alert(
         error instanceof Error
           ? error.message
-          : "Gagal mengambil daftar tumbal"
+          : "Gagal mengambil item tumbal dari Roblox"
       );
     } finally {
       setLoadingTumbal(false);
     }
   };
 
-  const handleSelectCategory = (category: PackageCategory) => {
+  const handleSelectCategory = async (category: PackageCategory) => {
     setSelectedCategory(category);
     setSelectedPackage(null);
     setSearch("");
     setPaymentProof(null);
     setPaymentPreview(null);
 
+    if (category === "tumbal") {
+      await loadTumbalItems();
+    }
+
     setTimeout(() => {
       document
         .getElementById("daftar-item-lims")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
+  };
+
+  const handleSearchRobloxTumbal = async () => {
+    await loadTumbalItems();
   };
 
   const selectLimitedItem = async (id: number) => {
@@ -176,26 +261,6 @@ export default function LimitedItemPage() {
     } finally {
       setLoadingDetail(false);
     }
-  };
-
-  const selectTumbalItem = (item: TumbalItem) => {
-    setSelectedPackage({
-      id: item.id,
-      namaItem: item.namaItem,
-      assetId: item.assetId,
-      harga: item.harga,
-      isActive: item.isActive,
-      kategori: "tumbal",
-    });
-
-    setPaymentProof(null);
-    setPaymentPreview(null);
-
-    setTimeout(() => {
-      document
-        .getElementById("form-order-lims")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
   };
 
   const createChatRoom = async (orderId?: string) => {
@@ -300,7 +365,6 @@ export default function LimitedItemPage() {
 
   useEffect(() => {
     loadProducts();
-    loadTumbalItems();
 
     const savedOrder = localStorage.getItem("lims_created_order");
     const savedRoom = localStorage.getItem("lims_chat_room");
@@ -396,7 +460,7 @@ export default function LimitedItemPage() {
 
                 <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-cyan-300 backdrop-blur">
                   <Crown size={18} />
-                  <span className="font-semibold">Limited Stock</span>
+                  <span className="font-semibold">Bisa Dibeli Kapan Saja</span>
                 </div>
               </div>
             </div>
@@ -440,7 +504,8 @@ export default function LimitedItemPage() {
               </h3>
 
               <p className="mt-2 text-sm text-gray-400">
-                Pilih paket ini untuk membeli item limited Roblox.
+                Item limited bisa dibeli kapan saja melalui form order
+                PrimeBlox. Gambar otomatis berdasarkan Asset ID.
               </p>
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-cyan-300">
@@ -451,7 +516,8 @@ export default function LimitedItemPage() {
             <button
               type="button"
               onClick={() => handleSelectCategory("tumbal")}
-              className={`relative overflow-hidden rounded-[28px] border p-5 text-left backdrop-blur-md transition duration-300 hover:-translate-y-1 ${
+              disabled={loadingTumbal}
+              className={`relative overflow-hidden rounded-[28px] border p-5 text-left backdrop-blur-md transition duration-300 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60 ${
                 selectedCategory === "tumbal"
                   ? "border-cyan-400/50 bg-cyan-500/10 shadow-xl shadow-cyan-500/20"
                   : "border-white/10 bg-white/[0.04] hover:border-cyan-400/40 hover:bg-cyan-500/5"
@@ -466,12 +532,14 @@ export default function LimitedItemPage() {
               </h3>
 
               <p className="mt-2 text-sm text-gray-400">
-                Pilih paket ini untuk membeli item tumbal Roblox.
+                Item tumbal membuka marketplace publik Roblox. Gambar diambil dari
+                Roblox Thumbnail API melalui proxy agar lebih stabil.
               </p>
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-cyan-300">
-                {tumbalItems.filter((item) => item.isActive !== false).length}{" "}
-                item tersedia
+                {loadingTumbal
+                  ? "Mengambil dari Roblox..."
+                  : `${tumbalItems.length} item Roblox tersedia`}
               </div>
             </button>
           </div>
@@ -484,27 +552,54 @@ export default function LimitedItemPage() {
                 <h2 className="text-2xl font-extrabold text-white">
                   {selectedCategory === "limited"
                     ? "Daftar Item Limited"
-                    : "Daftar Item Tumbal"}
+                    : "Daftar Item Tumbal Roblox"}
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-400">
-                  Pilih salah satu item untuk melanjutkan ke form order.
+                  {selectedCategory === "limited"
+                    ? "Item limited bisa dibeli kapan saja. Pilih item untuk melanjutkan ke form order."
+                    : `Menampilkan item tumbal pilihan. Klik item untuk buka marketplace Roblox.`}
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 shadow-sm md:w-[360px]">
-                <Search size={20} className="text-cyan-400" />
-                <input
-                  type="text"
-                  placeholder={
-                    selectedCategory === "limited"
-                      ? "Cari item limited..."
-                      : "Cari item tumbal..."
-                  }
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
-                />
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 shadow-sm md:w-[360px]">
+                  <Search size={20} className="text-cyan-400" />
+                  <input
+                    type="text"
+                    placeholder={
+                      selectedCategory === "limited"
+                        ? "Cari item limited..."
+                        : "Cari item tumbal..."
+                    }
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        selectedCategory === "tumbal"
+                      ) {
+                        handleSearchRobloxTumbal();
+                      }
+                    }}
+                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+                  />
+                </div>
+
+                {selectedCategory === "tumbal" && (
+                  <button
+                    type="button"
+                    onClick={handleSearchRobloxTumbal}
+                    disabled={loadingTumbal}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-bold text-[#07111f] transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <RefreshCw
+                      size={18}
+                      className={loadingTumbal ? "animate-spin" : ""}
+                    />
+                    Refresh Item
+                  </button>
+                )}
               </div>
             </div>
 
@@ -530,7 +625,7 @@ export default function LimitedItemPage() {
                       return (
                         <div
                           key={item.id}
-                          className={`relative min-h-[260px] overflow-hidden rounded-[28px] border p-5 backdrop-blur-md transition duration-300 hover:-translate-y-1 ${
+                          className={`relative min-h-[430px] overflow-hidden rounded-[28px] border p-5 backdrop-blur-md transition duration-300 hover:-translate-y-1 ${
                             active
                               ? "border-cyan-400/50 bg-cyan-500/10 shadow-xl shadow-cyan-500/20"
                               : "border-white/10 bg-white/[0.04] hover:border-cyan-400/40 hover:bg-cyan-500/5"
@@ -552,9 +647,25 @@ export default function LimitedItemPage() {
                             </>
                           )}
 
-                          <div className="relative z-10 flex min-h-[220px] flex-col">
+                          <div className="relative z-10 flex min-h-[390px] flex-col">
                             <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
                               <Crown size={28} />
+                            </div>
+
+                            <div className="mt-5 flex h-[190px] w-full items-center justify-center rounded-3xl border border-white/10 bg-[#07111f]/70 p-4">
+                              {item.assetId ? (
+                                <img
+                                  src={`/api/roblox-thumbnail?assetId=${item.assetId}`}
+                                  alt={item.namaItem}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/images/char1.png";
+                                  }}
+                                  className="h-[165px] w-[165px] max-w-full object-contain transition duration-300 hover:scale-105"
+                                />
+                              ) : (
+                                <Crown size={76} className="text-cyan-400" />
+                              )}
                             </div>
 
                             <span className="mt-4 w-fit rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
@@ -563,7 +674,7 @@ export default function LimitedItemPage() {
 
                             <p
                               className={`mt-3 text-xs text-gray-400 ${
-                                isFirstCard ? "max-w-[56%]" : ""
+                                ""
                               }`}
                             >
                               Asset ID: {item.assetId}
@@ -571,7 +682,7 @@ export default function LimitedItemPage() {
 
                             <h3
                               className={`mt-3 text-lg font-extrabold text-white ${
-                                isFirstCard ? "max-w-[56%]" : ""
+                                ""
                               }`}
                             >
                               {item.namaItem}
@@ -616,98 +727,76 @@ export default function LimitedItemPage() {
               <>
                 {loadingTumbal ? (
                   <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-sm text-gray-300 backdrop-blur-md">
-                    Loading item tumbal...
+                    Mengambil item tumbal Roblox...
                   </div>
                 ) : tumbalList.length === 0 ? (
                   <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-10 text-center text-gray-400 backdrop-blur-md">
-                    Item tumbal tidak ditemukan.
+                    Item tumbal Roblox tidak ditemukan.
                   </div>
                 ) : (
                   <div className="grid gap-5 md:grid-cols-3">
-                    {tumbalList.map((item, index) => {
-                      const active =
-                        selectedPackage?.kategori === "tumbal" &&
-                        selectedPackage?.id === item.id;
-
-                      const isFirstCard = index === 0;
-
+                    {tumbalList.map((item) => {
                       return (
-                        <div
+                        <a
                           key={`tumbal-${item.id}`}
-                          className={`relative min-h-[260px] overflow-hidden rounded-[28px] border p-5 backdrop-blur-md transition duration-300 hover:-translate-y-1 ${
-                            active
-                              ? "border-cyan-400/50 bg-cyan-500/10 shadow-xl shadow-cyan-500/20"
-                              : "border-white/10 bg-white/[0.04] hover:border-cyan-400/40 hover:bg-cyan-500/5"
-                          }`}
+                          href={item.marketplaceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative min-h-[360px] overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5"
                         >
-                          {isFirstCard && (
-                            <>
-                              <div className="absolute bottom-0 right-0 top-0 w-[46%] overflow-hidden rounded-r-[28px]">
-                                <Image
-                                  src="/images/char1.png"
-                                  alt="Tumbal Character"
-                                  width={230}
-                                  height={230}
-                                  className="absolute bottom-[-18px] right-[-12px] h-[215px] w-auto object-contain object-bottom opacity-95"
-                                />
+                          <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100">
+                            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl" />
+                          </div>
+
+                          <div className="relative z-10 flex min-h-[320px] flex-col">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
+                                <Skull size={28} />
                               </div>
 
-                              <div className="absolute inset-0 bg-gradient-to-r from-[#07111f] via-[#07111f]/95 to-[#07111f]/5" />
-                            </>
-                          )}
+                              <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300">
+                                Roblox Item
+                              </span>
+                            </div>
 
-                          <div className="relative z-10 flex min-h-[220px] flex-col">
-                            <div className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
-                              <Skull size={28} />
+                            <div className="mt-5 flex h-[150px] items-center justify-center rounded-3xl border border-white/10 bg-[#07111f]/70 p-3">
+                              {item.robloxImage ? (
+                                <img
+                                  src={item.robloxImage}
+                                  alt={item.namaItem}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/images/char1.png";
+                                  }}
+                                  className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+                                />
+                              ) : (
+                                <Skull size={56} className="text-cyan-400" />
+                              )}
                             </div>
 
                             <span className="mt-4 w-fit rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
                               Item Tumbal
                             </span>
 
-                            <p
-                              className={`mt-3 text-xs text-gray-400 ${
-                                isFirstCard ? "max-w-[56%]" : ""
-                              }`}
-                            >
+                            <p className="mt-3 text-xs text-gray-400">
                               Asset ID: {item.assetId}
                             </p>
 
-                            <h3
-                              className={`mt-3 text-lg font-extrabold text-white ${
-                                isFirstCard ? "max-w-[56%]" : ""
-                              }`}
-                            >
+                            <h3 className="mt-3 line-clamp-2 text-lg font-extrabold text-white">
                               {item.namaItem}
                             </h3>
 
-                            <h4 className="mt-4 text-xl font-extrabold text-cyan-400">
-                              Rp {Number(item.harga).toLocaleString("id-ID")}
+                            <h4 className="mt-4 text-sm font-semibold text-cyan-300">
+                              Klik untuk buka marketplace Roblox
                             </h4>
 
-                            <button
-                              type="button"
-                              onClick={() => selectTumbalItem(item)}
-                              className={`mt-auto flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition ${
-                                active
-                                  ? "bg-cyan-500 text-[#07111f]"
-                                  : "border border-white/10 bg-white/5 text-cyan-300 hover:bg-cyan-500 hover:text-[#07111f]"
-                              }`}
-                            >
-                              {active ? (
-                                <>
-                                  <CheckCircle2 size={18} />
-                                  Item Dipilih
-                                </>
-                              ) : (
-                                <>
-                                  <ShoppingCart size={18} />
-                                  Pilih Item
-                                </>
-                              )}
-                            </button>
+                            <div className="mt-auto flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-cyan-300 transition group-hover:bg-cyan-500 group-hover:text-[#07111f]">
+                              <ExternalLink size={18} />
+                              Buka Marketplace Roblox
+                            </div>
                           </div>
-                        </div>
+                        </a>
                       );
                     })}
                   </div>
@@ -717,7 +806,7 @@ export default function LimitedItemPage() {
           </section>
         )}
 
-        {selectedPackage && (
+        {selectedPackage && selectedPackage.kategori === "limited" && (
           <div id="form-order-lims" className="mt-10">
             <FormDataOrderLims
               form={form}

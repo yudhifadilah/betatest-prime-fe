@@ -16,8 +16,6 @@ import {
   Clock3,
 } from "lucide-react";
 
-type Category = "limited" | "tumbal";
-
 type LimsItem = {
   id: number;
   namaItem: string;
@@ -42,74 +40,66 @@ type LimsOrder = {
   createdAt?: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(
+  /\/+$/,
+  ""
+);
 
-const getOrderStatusStyle = (
-  status?: string,
-  paymentStatus?: string
-) => {
+const endpoint = "/api/lims/produk";
+
+const getOrderStatusStyle = (status?: string, paymentStatus?: string) => {
   const currentStatus = (
-    paymentStatus === "unpaid"
-      ? "unpaid"
-      : status || "pending"
+    paymentStatus === "unpaid" ? "unpaid" : status || "pending"
   ).toLowerCase();
 
   switch (currentStatus) {
     case "unpaid":
       return {
-        className:
-          "bg-orange-50 text-orange-700 border border-orange-200",
+        className: "border-orange-400/20 bg-orange-500/10 text-orange-300",
         label: "Belum Bayar",
       };
 
     case "pending":
       return {
-        className:
-          "bg-yellow-50 text-yellow-700 border border-yellow-200",
+        className: "border-yellow-400/20 bg-yellow-500/10 text-yellow-300",
         label: "Pending",
       };
 
     case "accepted":
       return {
-        className:
-          "bg-indigo-50 text-indigo-700 border border-indigo-200",
+        className: "border-indigo-400/20 bg-indigo-500/10 text-indigo-300",
         label: "Diterima",
       };
 
     case "processing":
       return {
-        className:
-          "bg-blue-50 text-blue-700 border border-blue-200",
+        className: "border-blue-400/20 bg-blue-500/10 text-blue-300",
         label: "Diproses",
       };
 
     case "completed":
     case "selesai":
       return {
-        className:
-          "bg-emerald-50 text-emerald-700 border border-emerald-200",
+        className: "border-emerald-400/20 bg-emerald-500/10 text-emerald-300",
         label: "Selesai",
       };
 
     case "cancelled":
     case "canceled":
       return {
-        className:
-          "bg-red-50 text-red-700 border border-red-200",
+        className: "border-red-400/20 bg-red-500/10 text-red-300",
         label: "Dibatalkan",
       };
 
     default:
       return {
-        className:
-          "bg-neutral-100 text-neutral-700 border border-neutral-200",
+        className: "border-white/10 bg-white/[0.04] text-gray-300",
         label: status || "Unknown",
       };
   }
 };
 
 export default function DashboardLimitedItemsPage() {
-  const [category, setCategory] = useState<Category>("limited");
   const [items, setItems] = useState<LimsItem[]>([]);
   const [orders, setOrders] = useState<LimsOrder[]>([]);
   const [search, setSearch] = useState("");
@@ -125,8 +115,6 @@ export default function DashboardLimitedItemsPage() {
     harga: "",
     isActive: true,
   });
-
-  const endpoint = category === "limited" ? "/api/lims/produk" : "/api/tumbal";
 
   const filteredItems = useMemo(() => {
     return items.filter((item) =>
@@ -172,6 +160,16 @@ export default function DashboardLimitedItemsPage() {
     return localStorage.getItem("token") || "";
   };
 
+  const safeJson = async (response: Response) => {
+    const text = await response.text();
+
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error("Response server bukan JSON");
+    }
+  };
+
   const loadItems = async () => {
     try {
       setLoading(true);
@@ -185,13 +183,13 @@ export default function DashboardLimitedItemsPage() {
         },
       });
 
-      const json = await res.json();
+      const json = await safeJson(res);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal mengambil data");
       }
 
-      setItems(json.data || []);
+      setItems(Array.isArray(json.data) ? json.data : []);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Gagal mengambil data");
     } finally {
@@ -212,13 +210,13 @@ export default function DashboardLimitedItemsPage() {
         },
       });
 
-      const json = await res.json();
+      const json = await safeJson(res);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal mengambil order LIMS");
       }
 
-      setOrders(json.data || []);
+      setOrders(Array.isArray(json.data) ? json.data : []);
     } catch (error) {
       console.error(error);
       setOrders([]);
@@ -236,21 +234,13 @@ export default function DashboardLimitedItemsPage() {
     try {
       setSaving(true);
 
-      const payload =
-        category === "limited"
-          ? {
-              namaItem: form.namaItem,
-              assetId: form.assetId,
-              harga: Number(form.harga),
-              isActive: form.isActive,
-              isTumbalAvailable: false,
-            }
-          : {
-              namaItem: form.namaItem,
-              assetId: form.assetId,
-              harga: Number(form.harga),
-              isActive: form.isActive,
-            };
+      const payload = {
+        namaItem: form.namaItem,
+        assetId: form.assetId,
+        harga: Number(form.harga),
+        isActive: form.isActive,
+        isTumbalAvailable: false,
+      };
 
       const url = editingId
         ? `${API_URL}${endpoint}/${editingId}`
@@ -260,12 +250,13 @@ export default function DashboardLimitedItemsPage() {
         method: editingId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
           Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json();
+      const json = await safeJson(res);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal menyimpan data");
@@ -301,11 +292,12 @@ export default function DashboardLimitedItemsPage() {
       const res = await fetch(`${API_URL}${endpoint}/${id}`, {
         method: "DELETE",
         headers: {
+          Accept: "application/json",
           Authorization: `Bearer ${getToken()}`,
         },
       });
 
-      const json = await res.json();
+      const json = await safeJson(res);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal menghapus item");
@@ -324,12 +316,13 @@ export default function DashboardLimitedItemsPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
           Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({ status }),
       });
 
-      const json = await res.json();
+      const json = await safeJson(res);
 
       if (!res.ok) {
         throw new Error(json.message || "Gagal update status order");
@@ -345,32 +338,33 @@ export default function DashboardLimitedItemsPage() {
   };
 
   useEffect(() => {
-    resetForm();
     loadItems();
-  }, [category]);
-
-  useEffect(() => {
     loadOrders();
   }, []);
 
   return (
-    <main className="min-h-screen bg-neutral-100 px-5 pb-10 pt-24 md:px-8 md:pt-8">
-      <div className="w-full space-y-8">
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+    <main className="relative min-h-screen overflow-hidden bg-[#07111f] px-5 pb-10 pt-24 text-white md:px-8 md:pt-8">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[#07111f]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(6,182,212,0.18),transparent_30%),radial-gradient(circle_at_85%_8%,rgba(37,99,235,0.20),transparent_32%),radial-gradient(circle_at_80%_85%,rgba(37,99,235,0.14),transparent_34%)]" />
+
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-8">
+        <section className="relative overflow-hidden rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-2xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(6,182,212,0.18),transparent_35%)]" />
+
+          <div className="relative flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-bold text-white">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300">
                 <Gem size={18} />
-                LIMS Dashboard
+                LIMS Management
               </div>
 
-              <h1 className="mt-5 text-4xl font-black text-black md:text-5xl">
+              <h1 className="mt-5 text-4xl font-black text-white md:text-5xl">
                 Item Limited
               </h1>
 
-              <p className="mt-2 max-w-2xl text-neutral-500">
-                Kelola item limited, item tumbal, dan order item LIMS dalam satu
-                halaman dashboard.
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-400 md:text-base">
+                Kelola item limited dan order LIMS dengan tampilan PrimeBlox
+                modern.
               </p>
             </div>
 
@@ -380,115 +374,56 @@ export default function DashboardLimitedItemsPage() {
                 loadItems();
                 loadOrders();
               }}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-black px-5 py-4 font-bold text-white transition hover:opacity-90"
+              disabled={loading || loadingOrders}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-4 text-sm font-extrabold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
             >
-              <RefreshCcw size={18} />
-              Refresh Data
+              <RefreshCcw
+                size={20}
+                className={loading || loadingOrders ? "animate-spin" : ""}
+              />
+              {loading || loadingOrders ? "Refreshing..." : "Refresh Data"}
             </button>
           </div>
         </section>
 
-        <section className="grid gap-5 md:grid-cols-4">
-          <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
-              <PackageCheck size={24} />
-            </div>
-            <p className="mt-4 text-sm font-semibold text-neutral-500">
-              Total Item
-            </p>
-            <h2 className="mt-1 text-3xl font-black text-black">
-              {items.length}
-            </h2>
-          </div>
+        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Total Item"
+            value={items.length}
+            subtitle="Semua item limited"
+            icon={<PackageCheck size={24} />}
+          />
 
-          <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white">
-              <CheckCircle2 size={24} />
-            </div>
-            <p className="mt-4 text-sm font-semibold text-neutral-500">
-              Item Aktif
-            </p>
-            <h2 className="mt-1 text-3xl font-black text-black">
-              {activeItems}
-            </h2>
-          </div>
+          <StatCard
+            title="Item Aktif"
+            value={activeItems}
+            subtitle="Siap tampil"
+            icon={<CheckCircle2 size={24} />}
+          />
 
-          <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white">
-              <XCircle size={24} />
-            </div>
-            <p className="mt-4 text-sm font-semibold text-neutral-500">
-              Tidak Aktif
-            </p>
-            <h2 className="mt-1 text-3xl font-black text-black">
-              {inactiveItems}
-            </h2>
-          </div>
+          <StatCard
+            title="Tidak Aktif"
+            value={inactiveItems}
+            subtitle="Disembunyikan"
+            icon={<XCircle size={24} />}
+          />
 
-          <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500 text-white">
-              <Clock3 size={24} />
-            </div>
-            <p className="mt-4 text-sm font-semibold text-neutral-500">
-              Order Pending
-            </p>
-            <h2 className="mt-1 text-3xl font-black text-black">
-              {pendingOrders}
-            </h2>
-          </div>
+          <StatCard
+            title="Order Pending"
+            value={pendingOrders}
+            subtitle="Perlu diproses"
+            icon={<Clock3 size={24} />}
+          />
         </section>
 
-        <section className="grid gap-5 md:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setCategory("limited")}
-            className={`rounded-[30px] border p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${
-              category === "limited"
-                ? "border-black bg-black text-white"
-                : "border-neutral-200 bg-white text-black"
-            }`}
-          >
-            <Gem size={36} />
-            <h2 className="mt-4 text-2xl font-black">Item Limited</h2>
-            <p
-              className={`mt-1 ${
-                category === "limited" ? "text-neutral-300" : "text-neutral-500"
-              }`}
-            >
-              Tambah, edit, dan hapus produk limited.
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCategory("tumbal")}
-            className={`rounded-[30px] border p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${
-              category === "tumbal"
-                ? "border-emerald-600 bg-emerald-600 text-white"
-                : "border-neutral-200 bg-white text-black"
-            }`}
-          >
-            <Gem size={36} />
-            <h2 className="mt-4 text-2xl font-black">Item Tumbal</h2>
-            <p
-              className={`mt-1 ${
-                category === "tumbal" ? "text-emerald-50" : "text-neutral-500"
-              }`}
-            >
-              Tambah, edit, dan hapus produk tumbal.
-            </p>
-          </button>
-        </section>
-
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-2xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
+          <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
             <div>
-              <h2 className="text-2xl font-black text-black">
-                {editingId ? "Edit Item" : "Tambah Item"}{" "}
-                {category === "limited" ? "Limited" : "Tumbal"}
+              <h2 className="text-2xl font-black text-white">
+                {editingId ? "Edit Item Limited" : "Tambah Item Limited"}
               </h2>
-              <p className="mt-1 text-neutral-500">
-                Isi data item dengan benar sebelum disimpan.
+              <p className="mt-2 text-sm leading-6 text-gray-400">
+                Isi data item limited dengan benar sebelum disimpan.
               </p>
             </div>
 
@@ -496,20 +431,20 @@ export default function DashboardLimitedItemsPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-2xl bg-neutral-100 px-4 py-3 font-bold text-black transition hover:bg-neutral-200"
+                className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/10"
               >
                 Batal Edit
               </button>
             )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <input
               type="text"
               placeholder="Nama item"
               value={form.namaItem}
               onChange={(e) => setForm({ ...form, namaItem: e.target.value })}
-              className="rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+              className="rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
             />
 
             <input
@@ -517,7 +452,7 @@ export default function DashboardLimitedItemsPage() {
               placeholder="Asset ID"
               value={form.assetId}
               onChange={(e) => setForm({ ...form, assetId: e.target.value })}
-              className="rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+              className="rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
             />
 
             <input
@@ -525,7 +460,7 @@ export default function DashboardLimitedItemsPage() {
               placeholder="Harga"
               value={form.harga}
               onChange={(e) => setForm({ ...form, harga: e.target.value })}
-              className="rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+              className="rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
             />
 
             <select
@@ -533,10 +468,14 @@ export default function DashboardLimitedItemsPage() {
               onChange={(e) =>
                 setForm({ ...form, isActive: e.target.value === "active" })
               }
-              className="rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-black outline-none focus:border-black"
+              className="rounded-2xl border border-white/10 bg-[#0b1627]/90 px-5 py-4 text-sm text-white outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/10"
             >
-              <option value="active">Aktif</option>
-              <option value="inactive">Tidak Aktif</option>
+              <option value="active" className="bg-[#07111f] text-white">
+                Aktif
+              </option>
+              <option value="inactive" className="bg-[#07111f] text-white">
+                Tidak Aktif
+              </option>
             </select>
           </div>
 
@@ -544,63 +483,60 @@ export default function DashboardLimitedItemsPage() {
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="mt-5 flex items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+            className="mt-5 flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-6 py-4 text-sm font-extrabold text-[#07111f] shadow-xl shadow-cyan-500/30 transition hover:bg-cyan-400 disabled:opacity-50"
           >
             <Plus size={20} />
             {saving
               ? "Menyimpan..."
               : editingId
-              ? "Update Item"
-              : "Tambah Item"}
+              ? "Update Item Limited"
+              : "Tambah Item Limited"}
           </button>
         </section>
 
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-2xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
+          <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
             <div>
-              <h2 className="text-2xl font-black text-black">
-                Daftar Item {category === "limited" ? "Limited" : "Tumbal"}
+              <h2 className="text-2xl font-black text-white">
+                Daftar Item Limited
               </h2>
-              <p className="mt-1 text-neutral-500">
+              <p className="mt-2 text-sm text-gray-400">
                 Total: {filteredItems.length} item
               </p>
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row">
-              <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-3">
-                <Search size={18} className="text-neutral-400" />
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-400/10">
+                <Search size={18} className="text-cyan-400" />
                 <input
                   type="text"
                   placeholder="Cari item..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="bg-transparent text-black outline-none"
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={loadItems}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 font-bold text-black transition hover:bg-neutral-200"
+                disabled={loading}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/10 disabled:opacity-50"
               >
-                <RefreshCcw size={18} />
+                <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
                 Refresh
               </button>
             </div>
           </div>
 
           {loading ? (
-            <div className="rounded-3xl bg-neutral-50 p-6 text-neutral-500">
-              Loading data...
-            </div>
+            <EmptyState text="Loading data item..." compact />
           ) : filteredItems.length === 0 ? (
-            <div className="rounded-3xl bg-neutral-50 p-10 text-center text-neutral-500">
-              Item belum tersedia.
-            </div>
+            <EmptyState text="Item limited belum tersedia." compact />
           ) : (
-            <div className="overflow-x-auto rounded-3xl border border-neutral-200">
-              <table className="w-full min-w-[900px] border-collapse bg-white text-left">
-                <thead className="bg-neutral-100 text-sm text-neutral-600">
+            <div className="overflow-x-auto rounded-[30px] border border-white/10 bg-[#0b1627]/50">
+              <table className="w-full min-w-[900px] border-collapse text-left">
+                <thead className="border-b border-white/10 bg-cyan-500/10 text-sm text-cyan-200">
                   <tr>
                     <th className="px-5 py-4">Item</th>
                     <th className="px-5 py-4">Asset ID</th>
@@ -614,33 +550,33 @@ export default function DashboardLimitedItemsPage() {
                   {filteredItems.map((item) => (
                     <tr
                       key={item.id}
-                      className="border-t border-neutral-200 text-sm"
+                      className="border-b border-white/10 text-sm transition last:border-b-0 hover:bg-cyan-500/5"
                     >
                       <td className="px-5 py-4">
-                        <div className="font-bold text-black">
+                        <div className="font-extrabold text-white">
                           {item.namaItem}
                         </div>
-                        <div className="text-xs text-neutral-500">
+                        <div className="mt-1 text-xs text-gray-500">
                           ID: {item.id}
                         </div>
                       </td>
 
-                      <td className="px-5 py-4 text-neutral-600">
+                      <td className="px-5 py-4 text-gray-300">
                         {item.assetId}
                       </td>
 
-                      <td className="px-5 py-4 font-bold text-black">
+                      <td className="px-5 py-4 font-extrabold text-cyan-300">
                         Rp {Number(item.harga).toLocaleString("id-ID")}
                       </td>
 
                       <td className="px-5 py-4">
                         {item.isActive === false ? (
-                          <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-semibold text-red-600">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 font-bold text-red-300">
                             <XCircle size={16} />
                             Tidak Aktif
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-semibold text-emerald-600">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 font-bold text-emerald-300">
                             <CheckCircle2 size={16} />
                             Aktif
                           </span>
@@ -652,7 +588,7 @@ export default function DashboardLimitedItemsPage() {
                           <button
                             type="button"
                             onClick={() => handleEdit(item)}
-                            className="flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 font-semibold text-black transition hover:bg-neutral-200"
+                            className="flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 font-bold text-cyan-300 transition hover:bg-cyan-500/20"
                           >
                             <Pencil size={16} />
                             Edit
@@ -661,7 +597,7 @@ export default function DashboardLimitedItemsPage() {
                           <button
                             type="button"
                             onClick={() => handleDelete(item.id)}
-                            className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 font-semibold text-red-600 transition hover:bg-red-100"
+                            className="flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 font-bold text-red-300 transition hover:bg-red-500/20"
                           >
                             <Trash2 size={16} />
                             Hapus
@@ -676,53 +612,53 @@ export default function DashboardLimitedItemsPage() {
           )}
         </section>
 
-        <section className="rounded-[34px] border border-neutral-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <section className="rounded-[34px] border border-cyan-500/20 bg-white/[0.04] p-6 shadow-2xl shadow-cyan-500/10 backdrop-blur-md md:p-8">
+          <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
             <div>
-              <h2 className="flex items-center gap-2 text-2xl font-black text-black">
-                <ShoppingCart size={26} />
-                Order Item LIMS
+              <h2 className="flex items-center gap-2 text-2xl font-black text-white">
+                <ShoppingCart size={26} className="text-cyan-400" />
+                Order Item Limited
               </h2>
-              <p className="mt-1 text-neutral-500">
-                Daftar order item limited dan item tumbal dari user.
+              <p className="mt-2 text-sm text-gray-400">
+                Daftar order item limited dari user.
               </p>
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row">
-              <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-5 py-3">
-                <Search size={18} className="text-neutral-400" />
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-400/10">
+                <Search size={18} className="text-cyan-400" />
                 <input
                   type="text"
                   placeholder="Cari order..."
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
-                  className="bg-transparent text-black outline-none"
+                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={loadOrders}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-neutral-100 px-5 py-3 font-bold text-black transition hover:bg-neutral-200"
+                disabled={loadingOrders}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/10 disabled:opacity-50"
               >
-                <RefreshCcw size={18} />
+                <RefreshCcw
+                  size={18}
+                  className={loadingOrders ? "animate-spin" : ""}
+                />
                 Refresh
               </button>
             </div>
           </div>
 
           {loadingOrders ? (
-            <div className="rounded-3xl bg-neutral-50 p-6 text-neutral-500">
-              Loading order LIMS...
-            </div>
+            <EmptyState text="Loading order LIMS..." compact />
           ) : filteredOrders.length === 0 ? (
-            <div className="rounded-3xl bg-neutral-50 p-10 text-center text-neutral-500">
-              Belum ada order item LIMS.
-            </div>
+            <EmptyState text="Belum ada order item limited." compact />
           ) : (
-            <div className="overflow-x-auto rounded-3xl border border-neutral-200">
-              <table className="w-full min-w-[1000px] border-collapse bg-white text-left">
-                <thead className="bg-neutral-100 text-sm text-neutral-600">
+            <div className="overflow-x-auto rounded-[30px] border border-white/10 bg-[#0b1627]/50">
+              <table className="w-full min-w-[1000px] border-collapse text-left">
+                <thead className="border-b border-white/10 bg-cyan-500/10 text-sm text-cyan-200">
                   <tr>
                     <th className="px-5 py-4">Order</th>
                     <th className="px-5 py-4">Buyer</th>
@@ -746,13 +682,13 @@ export default function DashboardLimitedItemsPage() {
                     return (
                       <tr
                         key={order.id}
-                        className="border-t border-neutral-200 text-sm"
+                        className="border-b border-white/10 text-sm transition last:border-b-0 hover:bg-cyan-500/5"
                       >
                         <td className="px-5 py-4">
-                          <div className="font-bold text-black">
+                          <div className="font-extrabold text-white">
                             {order.orderId || `#${order.id}`}
                           </div>
-                          <div className="text-xs text-neutral-500">
+                          <div className="mt-1 text-xs text-gray-500">
                             {order.createdAt
                               ? new Date(order.createdAt).toLocaleString(
                                   "id-ID"
@@ -762,26 +698,26 @@ export default function DashboardLimitedItemsPage() {
                         </td>
 
                         <td className="px-5 py-4">
-                          <div className="font-semibold text-black">
+                          <div className="font-bold text-white">
                             {order.robloxUsername || order.buyerName || "-"}
                           </div>
                         </td>
 
-                        <td className="px-5 py-4 text-neutral-600">
+                        <td className="px-5 py-4 text-gray-300">
                           {itemName}
                         </td>
 
-                        <td className="px-5 py-4 text-neutral-600">
+                        <td className="px-5 py-4 text-gray-300">
                           {order.assetId || "-"}
                         </td>
 
-                        <td className="px-5 py-4 font-bold text-black">
+                        <td className="px-5 py-4 font-extrabold text-cyan-300">
                           Rp {Number(price).toLocaleString("id-ID")}
                         </td>
 
                         <td className="px-5 py-4">
                           <span
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-semibold capitalize ${statusConfig.className}`}
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-bold capitalize ${statusConfig.className}`}
                           >
                             <ReceiptText size={16} />
                             {statusConfig.label}
@@ -795,7 +731,7 @@ export default function DashboardLimitedItemsPage() {
                               onClick={() =>
                                 updateOrderStatus(order.id, "processing")
                               }
-                              className="rounded-xl bg-blue-100 px-4 py-2 font-semibold text-cyan-700 transition hover:bg-cyan-100"
+                              className="rounded-xl border border-blue-400/20 bg-blue-500/10 px-4 py-2 font-bold text-blue-300 transition hover:bg-blue-500/20"
                             >
                               Proses
                             </button>
@@ -805,7 +741,7 @@ export default function DashboardLimitedItemsPage() {
                               onClick={() =>
                                 updateOrderStatus(order.id, "completed")
                               }
-                              className="rounded-xl bg-emerald-100 px-4 py-2 font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                              className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 font-bold text-emerald-300 transition hover:bg-emerald-500/20"
                             >
                               Selesai
                             </button>
@@ -815,7 +751,7 @@ export default function DashboardLimitedItemsPage() {
                               onClick={() =>
                                 updateOrderStatus(order.id, "cancelled")
                               }
-                              className="rounded-xl bg-red-100 px-4 py-2 font-semibold text-rose-700 transition hover:bg-rose-100"
+                              className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 font-bold text-red-300 transition hover:bg-red-500/20"
                             >
                               Batal
                             </button>
@@ -831,5 +767,53 @@ export default function DashboardLimitedItemsPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="group rounded-[28px] border border-cyan-500/20 bg-white/[0.04] p-5 shadow-xl shadow-cyan-500/5 backdrop-blur-md transition hover:-translate-y-1 hover:border-cyan-400/40 hover:bg-cyan-500/5">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400 transition group-hover:bg-cyan-500 group-hover:text-[#07111f]">
+        {icon}
+      </div>
+
+      <p className="mt-5 text-sm font-bold text-gray-400">{title}</p>
+      <h2 className="mt-2 text-3xl font-black text-white">{value}</h2>
+      <p className="mt-2 text-sm text-gray-500">{subtitle}</p>
+    </div>
+  );
+}
+
+function EmptyState({
+  text,
+  compact = false,
+}: {
+  text: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`flex flex-col items-center justify-center rounded-[30px] border border-dashed border-white/10 bg-white/[0.04] p-8 text-center ${
+        compact ? "min-h-[220px]" : "min-h-[260px]"
+      }`}
+    >
+      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-cyan-400/20 bg-cyan-500/10">
+        <ReceiptText size={30} className="text-cyan-400" />
+      </div>
+
+      <h3 className="mt-5 text-lg font-black text-white">Tidak Ada Data</h3>
+
+      <p className="mt-2 max-w-sm text-sm text-gray-400">{text}</p>
+    </div>
   );
 }

@@ -5,12 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ReceiptText,
-  Users,
   LogOut,
   Menu,
   X,
   ShieldCheck,
-  Bell,
   Search,
   ChevronRight,
   MessageCircle,
@@ -236,14 +234,20 @@ export default function DashboardSidebar() {
   const LogoBrand = ({
     subtitle = "Admin Control",
     mobile = false,
+    onClick,
   }: {
     subtitle?: string;
     mobile?: boolean;
+    onClick?: () => void;
   }) => {
     return (
-      <div className="flex items-center gap-3">
+      <Link
+        href="/"
+        onClick={onClick}
+        className="group flex w-fit items-center gap-3 rounded-[24px] transition active:scale-[0.98]"
+      >
         <div
-          className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-black shadow-lg ${
+          className={`relative flex shrink-0 items-center justify-center overflow-hidden border border-cyan-500/20 bg-white/[0.04] shadow-lg shadow-cyan-500/5 transition group-hover:border-cyan-400/40 ${
             mobile ? "h-11 w-11 rounded-2xl" : "h-14 w-14 rounded-[22px]"
           }`}
         >
@@ -259,22 +263,18 @@ export default function DashboardSidebar() {
 
         <div>
           <h1
-            className={`font-bold leading-none text-black ${
+            className={`font-extrabold leading-none text-white transition group-hover:text-cyan-400 ${
               mobile ? "text-xl" : "text-2xl"
             }`}
           >
             PrimeBlox
           </h1>
 
-          <p
-            className={`mt-1 text-neutral-500 ${
-              mobile ? "text-xs" : "text-sm"
-            }`}
-          >
+          <p className={`mt-1 text-gray-400 ${mobile ? "text-xs" : "text-sm"}`}>
             {subtitle}
           </p>
         </div>
-      </div>
+      </Link>
     );
   };
 
@@ -282,29 +282,31 @@ export default function DashboardSidebar() {
     return (
       <div className="flex h-full flex-col">
         <div className="mb-7">
-          <LogoBrand />
+          <LogoBrand onClick={onNavigate} />
         </div>
 
-        <div className="mb-5 rounded-[26px] border border-neutral-200 bg-gradient-to-br from-neutral-950 to-neutral-800 p-5 text-white shadow-xl">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10">
+        <div className="mb-5 relative overflow-hidden rounded-[26px] border border-cyan-500/20 bg-white/[0.04] p-5 text-white shadow-xl shadow-cyan-500/10 backdrop-blur-md">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(6,182,212,0.14),transparent_45%)]" />
+
+          <div className="relative flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-400">
               <ShieldCheck size={22} />
             </div>
 
             <div className="min-w-0">
-              <p className="text-sm font-bold">{roleLabel} Access</p>
+              <p className="text-sm font-bold text-white">{roleLabel} Access</p>
 
               <div className="mt-2 space-y-1">
-                <p className="truncate text-xs text-white/60">
+                <p className="truncate text-xs text-gray-400">
                   Name:
-                  <span className="ml-1 font-semibold text-white">
+                  <span className="ml-1 font-semibold text-cyan-300">
                     {nameLabel}
                   </span>
                 </p>
 
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-gray-400">
                   Role:
-                  <span className="ml-1 font-semibold text-white">
+                  <span className="ml-1 font-semibold text-cyan-300">
                     {roleLabel}
                   </span>
                 </p>
@@ -312,25 +314,25 @@ export default function DashboardSidebar() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3">
-            <p className="text-xs text-white/60">Status</p>
-            <p className="text-sm font-semibold text-white">
+          <div className="relative mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+            <p className="text-xs text-gray-400">Status</p>
+            <p className="text-sm font-semibold text-cyan-300">
               Online & Verified
             </p>
           </div>
         </div>
 
-        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
-          <Search size={18} className="text-neutral-400" />
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1627]/80 px-4 py-3 shadow-sm backdrop-blur-md">
+          <Search size={18} className="text-cyan-400" />
 
           <input
             type="text"
             placeholder="Search menu..."
-            className="w-full bg-transparent text-sm text-black outline-none placeholder:text-neutral-400"
+            className="w-full bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
           />
         </div>
 
-        <div className="mb-3 px-2 text-xs font-bold uppercase tracking-[0.25em] text-neutral-400">
+        <div className="mb-3 px-2 text-xs font-bold uppercase tracking-[0.25em] text-cyan-400/70">
           Menu
         </div>
 
@@ -346,22 +348,22 @@ export default function DashboardSidebar() {
                 onClick={onNavigate}
                 className={`group flex items-center justify-between rounded-[22px] px-3 py-3 font-semibold transition-all ${
                   active
-                    ? "bg-black text-white shadow-lg"
-                    : "text-neutral-700 hover:bg-neutral-100"
+                    ? "border border-cyan-400/30 bg-cyan-500 text-[#07111f] shadow-lg shadow-cyan-500/20"
+                    : "border border-transparent text-gray-300 hover:border-cyan-400/20 hover:bg-cyan-500/10 hover:text-cyan-300"
                 }`}
               >
                 <span className="flex items-center gap-3">
                   <span
                     className={`relative flex h-11 w-11 items-center justify-center rounded-2xl transition ${
                       active
-                        ? "bg-white/15 text-white"
-                        : "bg-neutral-100 text-neutral-700 group-hover:bg-white"
+                        ? "bg-[linear-gradient(180deg,#081426_0%,#07111f_45%,#06101d_100%)]/10 text-[#07111f]"
+                        : "border border-white/10 bg-white/[0.04] text-gray-300 group-hover:border-cyan-400/30 group-hover:bg-cyan-500/10 group-hover:text-cyan-300"
                     }`}
                   >
                     {menu.icon}
 
                     {menu.label === "Live Chat" && (
-                      <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-white" />
+                      <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-500 ring-2 ring-[#07111f]" />
                     )}
                   </span>
 
@@ -372,8 +374,8 @@ export default function DashboardSidebar() {
                   size={18}
                   className={`transition ${
                     active
-                      ? "text-white"
-                      : "text-neutral-300 group-hover:text-neutral-700"
+                      ? "text-[#07111f]"
+                      : "text-gray-600 group-hover:text-cyan-300"
                   }`}
                 />
               </Link>
@@ -381,39 +383,31 @@ export default function DashboardSidebar() {
           })}
         </nav>
 
-        <div className="mt-auto space-y-4 pt-6">
-          <div className="rounded-[26px] border border-neutral-200 bg-neutral-50 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <Bell size={18} className="text-black" />
-              <p className="font-bold text-black">Order Alert</p>
-            </div>
-
-            <p className="text-sm text-neutral-500">
-              8 order baru menunggu diproses hari ini.
-            </p>
-          </div>
-
-          <div className="rounded-[26px] border border-neutral-200 bg-white p-4 shadow-sm">
+        <div className="mt-auto space-y-5 pt-6">
+          <div className="overflow-hidden rounded-[28px] border border-cyan-500/20 bg-white/[0.04] p-5 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                  className={`flex h-12 w-12 items-center justify-center rounded-[18px] shadow-sm ${
                     storeOpen
-                      ? "bg-green-100 text-green-600"
-                      : "bg-red-100 text-red-600"
+                      ? "border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
+                      : "border border-red-400/20 bg-red-500/10 text-red-300"
                   }`}
                 >
-                  <Store size={21} />
+                  <Store size={22} />
                 </div>
 
                 <div>
-                  <p className="font-bold text-black">Status Toko</p>
+                  <p className="text-sm font-extrabold text-white">
+                    Status Toko
+                  </p>
+
                   <p
-                    className={`text-sm font-medium ${
-                      storeOpen ? "text-green-600" : "text-red-600"
+                    className={`mt-1 text-xs font-semibold ${
+                      storeOpen ? "text-emerald-300" : "text-red-300"
                     }`}
                   >
-                    {storeOpen ? "Toko sedang buka" : "Toko sedang tutup"}
+                    {storeOpen ? "Toko Sedang Buka" : "Toko Sedang Tutup"}
                   </p>
                 </div>
               </div>
@@ -422,13 +416,15 @@ export default function DashboardSidebar() {
                 type="button"
                 onClick={toggleStore}
                 disabled={loadingStore}
-                className={`relative h-8 w-14 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  storeOpen ? "bg-green-500" : "bg-red-500"
+                className={`relative h-8 w-14 shrink-0 rounded-full shadow-lg transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  storeOpen
+                    ? "bg-emerald-500 shadow-emerald-500/30"
+                    : "bg-red-500 shadow-red-500/30"
                 }`}
                 aria-label="Toggle status toko"
               >
                 <span
-                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition ${
+                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition-all duration-300 ${
                     storeOpen ? "left-7" : "left-1"
                   }`}
                 />
@@ -439,7 +435,7 @@ export default function DashboardSidebar() {
           <button
             type="button"
             onClick={logout}
-            className="flex w-full items-center justify-center gap-2 rounded-[22px] bg-red-500 py-4 font-semibold text-white shadow-lg transition hover:bg-red-600 active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-2 rounded-[24px] border border-red-400/20 bg-red-500/90 py-4 font-bold text-white shadow-xl shadow-red-500/20 transition-all duration-300 hover:bg-red-500 active:scale-[0.98]"
           >
             <LogOut size={20} />
             Logout
@@ -455,13 +451,17 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      <header className="fixed left-0 top-0 z-[9999] flex h-16 w-full items-center justify-between border-b border-neutral-200 bg-white/85 px-5 shadow-sm backdrop-blur-xl md:hidden">
-        <LogoBrand subtitle="Admin Panel" mobile />
+      <header className="fixed left-0 top-0 z-[9999] flex h-16 w-full items-center justify-between border-b border-cyan-500/10 bg-[linear-gradient(180deg,#081426_0%,#07111f_45%,#06101d_100%)]/95 px-5 shadow-lg shadow-cyan-500/5 backdrop-blur-xl md:hidden">
+        <LogoBrand
+          subtitle="Admin Panel"
+          mobile
+          onClick={() => setOpen(false)}
+        />
 
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-black shadow-sm transition active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-300 shadow-sm transition active:scale-95"
           aria-label="Open sidebar"
         >
           <Menu size={24} />
@@ -473,16 +473,16 @@ export default function DashboardSidebar() {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-md"
+            className="absolute inset-0 h-full w-full bg-black/60 backdrop-blur-md"
             aria-label="Close sidebar overlay"
           />
 
-          <aside className="absolute left-0 top-0 z-[9999] h-full w-[88%] max-w-sm overflow-y-auto rounded-r-[36px] border-r border-white/40 bg-white/95 p-5 shadow-2xl backdrop-blur-2xl">
+          <aside className="absolute left-0 top-0 z-[9999] h-full w-[88%] max-w-sm overflow-y-auto rounded-r-[36px] border-r border-cyan-500/10 bg-[linear-gradient(180deg,#081426_0%,#07111f_45%,#06101d_100%)] p-5 shadow-[0_0_40px_rgba(0,255,255,0.06)] backdrop-blur-2xl">
             <div className="mb-5 flex justify-end">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-black shadow-sm"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10 text-cyan-300 shadow-sm"
                 aria-label="Close sidebar"
               >
                 <X size={22} />
@@ -494,7 +494,7 @@ export default function DashboardSidebar() {
         </div>
       )}
 
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-80 flex-col overflow-y-auto border-r border-neutral-200 bg-white/95 p-5 shadow-sm backdrop-blur-xl md:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-80 flex-col overflow-y-auto border-r border-cyan-500/10 bg-[linear-gradient(180deg,#081426_0%,#07111f_45%,#06101d_100%)] p-5 shadow-[0_0_40px_rgba(0,255,255,0.04)] backdrop-blur-2xl md:flex">
         <SidebarContent />
       </aside>
     </>
